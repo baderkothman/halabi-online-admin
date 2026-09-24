@@ -27,6 +27,12 @@ export interface WatchRecord {
   seed: WatchFormValues | undefined;
   /** True when fields exist on the server that this form could not load. */
   detailUnavailable: boolean;
+  /**
+   * The record is still being fetched. The form MUST NOT be interactive while
+   * this is true: seeding calls `reset()`, which would discard anything the
+   * operator had already typed into the blank fields.
+   */
+  isSeeding: boolean;
   /** The list request failed — the form cannot show anything meaningful. */
   listError: unknown;
   isListError: boolean;
@@ -75,6 +81,12 @@ export function useWatchRecord(id: string | undefined): WatchRecord {
     [existing, ready, full],
   );
 
+  // Not simply `!seed`: once the list has loaded and the watch is genuinely
+  // missing, there is nothing left to wait for and the page shows its
+  // "no longer exists" branch instead.
+  const isSeeding =
+    isEdit && !seed && !watches.isError && !(watches.isSuccess && !existing);
+
   return {
     existing,
     categories: categories.data ?? [],
@@ -82,6 +94,7 @@ export function useWatchRecord(id: string | undefined): WatchRecord {
     categoriesFailed: categories.isError,
     seed,
     detailUnavailable: isEdit && Boolean(existing) && !isPublished,
+    isSeeding,
     listError: watches.error,
     isListError: watches.isError,
     isListSuccess: watches.isSuccess,

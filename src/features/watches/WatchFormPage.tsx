@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Box, Button, Paper, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, Paper, Skeleton, Stack, Typography } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -117,6 +117,25 @@ export function WatchFormPage() {
             Back to watches
           </Button>
         </Paper>
+      </PageBody>
+    );
+  }
+
+  // Rendering the real form here would show blank, editable fields that get
+  // silently overwritten the moment the record arrives and `reset()` runs.
+  if (record.isSeeding) {
+    return (
+      <PageBody>
+        <Stack spacing={2.5} sx={{ maxWidth: 720 }} aria-busy="true" aria-label="Loading this watch">
+          {[3, 2, 4].map((rows, section) => (
+            <Box key={section}>
+              <Skeleton width={140} height={14} sx={{ mb: 1.5 }} />
+              {Array.from({ length: rows }, (_, row) => (
+                <Skeleton key={row} height={38} sx={{ mb: 1 }} />
+              ))}
+            </Box>
+          ))}
+        </Stack>
       </PageBody>
     );
   }

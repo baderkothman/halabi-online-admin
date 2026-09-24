@@ -69,9 +69,35 @@ describe('useWatchRecord', () => {
     expect(result.current.seed?.description).toBe('');
   });
 
+  it('reports that it is still seeding while the list has not arrived', () => {
+    // Regression test. Without this flag the edit route rendered blank,
+    // editable fields, and the seeding effect then called `reset()` and
+    // discarded whatever the operator had typed into them.
+    const empty = new QueryClient({ defaultOptions: { queries: { retry: false, enabled: false } } });
+    const { result } = renderHook(() => useWatchRecord('watch-1'), { wrapper: wrapper(empty) });
+
+    expect(result.current.isSeeding).toBe(true);
+    expect(result.current.seed).toBeUndefined();
+  });
+
+  it('stops seeding once the record has loaded', () => {
+    const { result } = renderHook(() => useWatchRecord('watch-1'), { wrapper: wrapper(seededClient()) });
+    expect(result.current.isSeeding).toBe(false);
+  });
+
+  it('stops seeding when the watch turns out not to exist', () => {
+    // Otherwise the page would spin forever instead of reaching its
+    // "that watch no longer exists" branch.
+    const { result } = renderHook(() => useWatchRecord('does-not-exist'), { wrapper: wrapper(seededClient()) });
+    expect(result.current.isSeeding).toBe(false);
+    expect(result.current.existing).toBeUndefined();
+  });
+
   it('produces no seed at all when creating rather than editing', () => {
     const { result } = renderHook(() => useWatchRecord(undefined), { wrapper: wrapper(seededClient()) });
     expect(result.current.seed).toBeUndefined();
     expect(result.current.detailUnavailable).toBe(false);
+    // The create form must be interactive immediately.
+    expect(result.current.isSeeding).toBe(false);
   });
 });
