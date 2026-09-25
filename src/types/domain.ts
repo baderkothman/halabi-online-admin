@@ -164,3 +164,68 @@ export interface DashboardSummary {
   new_inquiries: number;
   active_discussions: number;
 }
+
+/**
+ * AI photo studio.
+ *
+ * A job is created when an administrator uploads a phone photo; an n8n workflow
+ * then analyses it, generates commercial product photography with OpenAI,
+ * quality-checks the result against the original and corrects it if needed. The
+ * dashboard polls the job for the progress the workflow reports.
+ */
+export const PHOTO_JOB_STATUS = [
+  'QUEUED', 'ANALYZING', 'GENERATING', 'REVIEWING', 'CORRECTING', 'SUCCEEDED', 'NEEDS_REVIEW', 'FAILED',
+] as const;
+export type PhotoJobStatus = (typeof PHOTO_JOB_STATUS)[number];
+
+export const PRODUCT_PHOTO_STYLE = [
+  'LUXURY_BOX', 'WHITE_ECOMMERCE', 'BLACK_MARBLE', 'DARK_PREMIUM', 'GOLD_LUXURY', 'SOCIAL_AD',
+] as const;
+export type ProductPhotoStyle = (typeof PRODUCT_PHOTO_STYLE)[number];
+
+export interface PhotoJob {
+  id: string;
+  watchId: string | null;
+  style: ProductPhotoStyle;
+  status: PhotoJobStatus;
+  /** 0–100, reported by the automation as it moves between stages. */
+  progress: number;
+  /** A sentence naming what is happening right now, for the progress bar. */
+  stage: string;
+  attempts: number;
+  /** The quality-control score, 0–100. Present once a result has been delivered. */
+  qualityScore: number | null;
+  sourceUrl: string;
+  resultUrl: string | null;
+  /** The quality-control verdict, kept verbatim so a rejection can be explained. */
+  review: PhotoJobReview | null;
+  error: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+/**
+ * The subset of the inspector's JSON this application reads.
+ *
+ * Every field is required here even though the automation may omit any of
+ * them: the API service fills the gaps with empty lists, so a screen never has
+ * to distinguish "no invented details" from "the key was absent".
+ */
+export interface PhotoJobReview {
+  approved: boolean;
+  score: number | null;
+  inventedDetails: string[];
+  missingDetails: string[];
+  changedDetails: string[];
+  visualArtifacts: string[];
+  correctionInstructions: string[];
+}
+
+export interface CreatePhotoJobInput {
+  watchId?: string;
+  style: ProductPhotoStyle;
+  mimeType: string;
+  /** Raw base64, without the `data:` prefix. */
+  imageBase64: string;
+  altText?: string;
+}
