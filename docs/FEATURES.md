@@ -73,37 +73,10 @@ storefront links to the piece by it.
 
 Leaving with unsaved changes asks first.
 
-**Not present:** free-form specifications, and any hand-management of the
-gallery — reordering, changing the primary image, deleting one. The database has
-the columns; the API has no endpoint that writes them. See
-[API-INTEGRATION.md](API-INTEGRATION.md#2-watch-image-management).
-
-### AI product photography
-
-On an existing watch, the form carries a photo studio: upload a plain
-photograph, choose one of six presentation styles, and get a commercial product
-photograph filed into the watch's gallery.
-
-The generation runs in an n8n workflow against OpenAI — analysis, generation,
-then a quality-control pass that compares the result against the original and
-scores it 0–100. Below 85, or on any product-identity error, it regenerates with
-the named defects to fix, up to three attempts. See
-[automation/README.md](../../automation/README.md).
-
-Three things this panel refuses to fake:
-
-- **The progress bar is determinate and driven by the workflow's own reports.**
-  A bar that animates on a timer is a lie about how far along a two-minute job
-  is.
-- **A flagged result is not saved to the gallery.** When quality control rejects
-  all three attempts, the image is shown with what the inspector objected to —
-  changed, invented, missing details — and the operator decides.
-- **A running job belongs to the server.** Leaving the form does not cancel it;
-  reopening the watch picks it back up.
-
-The studio appears only when editing, because a generated photograph is filed
-against a watch row. If the API has no automation configured, it says so rather
-than offering a button that cannot work.
+**Not present:** image upload and free-form specifications. The database has a
+`watch_images` table and a `specifications` column; the API has no endpoint that
+writes either. See
+[API-INTEGRATION.md](API-INTEGRATION.md#2-watch-images).
 
 ## Inquiries
 

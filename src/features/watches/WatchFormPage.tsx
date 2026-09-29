@@ -9,7 +9,6 @@ import { ErrorState } from '@/components/feedback/ErrorState';
 import {
   AvailabilityFields, BasicInformationFields, ClassificationFields, PricingFields, SpecificationFields,
 } from './WatchFormFields';
-import { PhotoStudioPanel } from './photo-studio/PhotoStudioPanel';
 import { useCreateWatch, useUpdateWatch } from './queries';
 import { useWatchRecord } from './use-watch-record';
 import { watchSchema, type WatchFormValues } from './schema';
@@ -30,16 +29,12 @@ const emptyForm: WatchFormValues = {
  * submitting, guarding against discarded edits; the field groups themselves
  * live in `WatchFormFields.tsx`.
  *
- * Images arrive through the AI photo studio below rather than through a plain
- * uploader: `POST /admin/dashboard/photo-jobs` is the only route that writes
- * `watch_images`, and it writes an approved, generated photograph.
- *
  * ── What is deliberately absent ────────────────────────────────────────────
- * Free-form specifications, and any hand-management of the gallery — reordering
- * images, changing the primary one, deleting one. The database has a
- * `specifications` jsonb column and the ordering columns, but no API endpoint
- * writes either. A control that cannot save is a placeholder pretending to be a
- * feature. Both are recorded in docs/API-INTEGRATION.md.
+ * Image management and free-form specifications. The database has a
+ * `watch_images` table and a `specifications` jsonb column, but no API endpoint
+ * writes either — there is no upload route, and neither appears in
+ * `CreateWatchDto`. An uploader that cannot save is a placeholder pretending to
+ * be a feature. Both are recorded in docs/API-INTEGRATION.md.
  */
 export function WatchFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -181,9 +176,6 @@ export function WatchFormPage() {
           categoriesLoading={record.categoriesLoading}
         />
         <AvailabilityFields control={control} />
-        {/* Editing only: a generated photograph is filed against a watch row,
-            so there has to be one to file it against. */}
-        {isEdit && id && <PhotoStudioPanel watchId={id} />}
 
         <Stack direction="row" spacing={1} sx={{ mt: 3, pb: 2 }}>
           <Button type="submit" variant="contained" disabled={busy}>

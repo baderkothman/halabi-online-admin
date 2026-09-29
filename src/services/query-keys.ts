@@ -27,14 +27,6 @@ export const queryKeys = {
     list: () => ['categories', 'list'] as const,
   },
 
-  photoJobs: {
-    all: ['photo-jobs'] as const,
-    /** Every job for one watch, newest first. */
-    list: (watchId: string) => ['photo-jobs', 'list', watchId] as const,
-    /** The polled key: one job, refetched while it is still running. */
-    detail: (id: string) => ['photo-jobs', 'detail', id] as const,
-  },
-
   inquiries: {
     all: ['inquiries'] as const,
     list: (status?: InquiryStatus) => ['inquiries', 'list', status ?? 'ALL'] as const,

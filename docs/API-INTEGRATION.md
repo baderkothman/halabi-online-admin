@@ -58,22 +58,6 @@ security: `RolesGuard` rejects the same token at every admin endpoint anyway.
 `ValidationPipe` runs with `forbidNonWhitelisted: true`, so sending a key the
 DTO does not declare is a 400, not a silent ignore.
 
-### AI photo studio
-
-| Endpoint | Notes |
-| --- | --- |
-| `POST /api/v1/admin/dashboard/photo-jobs` | Upload + queue. JSON with a **base64** payload, not multipart — the API has no upload route and no object storage. Answers **202** with a job that has barely started. |
-| `GET /api/v1/admin/dashboard/photo-jobs/:id` | Polled every 2 s while the job is running; polling stops at a terminal status. |
-| `GET /api/v1/admin/dashboard/photo-jobs?watchId=` | A watch's job history, and how a job still running when the screen opens is picked back up. |
-| `GET /api/v1/media/:id` | Public image bytes, immutable. Both the source photo and the result are served from here. |
-
-The generation runs in an n8n workflow against OpenAI and reports its progress
-to the API over its own authenticated callbacks — so `progress` and `stage` are
-facts from the workflow, never something this client interpolates. An approved
-result is written into `watch_images` **by the API**; a rejected one
-(`NEEDS_REVIEW`) is kept on the job and deliberately not filed. See
-`automation/README.md`.
-
 ### Inquiries
 
 | Endpoint | Notes |
@@ -98,8 +82,6 @@ Rules live with the mutations in each feature's `queries.ts`.
 | --- | --- | --- |
 | Create watch | `watches.all`, `dashboard.all` | New row; summary counts move |
 | Update watch | `watches.all`, `dashboard.all` | Availability and visibility both feed the summary |
-| Create photo job | `photoJobs.all` | A new job joins the watch's history; the detail cache is seeded from the 202 response |
-| Photo job reaches `SUCCEEDED` | `watches.all` | The API filed a new row into `watch_images`, so the watch's detail is stale |
 | Update inquiry status | `inquiries.all`, `dashboard.all` | `updated_at` is the list's sort order; the NEW count drives the sidebar badge |
 | Reply to inquiry | `inquiries.all`, `dashboard.all` | The backend also changes the status — see above |
 
@@ -131,25 +113,21 @@ category, brand, dateFrom, dateTo
 When they arrive, the two client-side hooks are replaced by query parameters and
 nothing else in either feature changes.
 
-### 2. Watch image management
+### 2. Watch images
 
-`watch_images` now has exactly **one** writer: an approved AI photo job, which
-appends a row and makes it primary only when the watch has none. That covers
-getting a photograph onto a watch; it does not cover managing the gallery.
-Still needed:
+`watch_images` exists in the schema, `WatchDetail.images` is returned by the
+public endpoint, and **nothing can write a row**. There is no upload route and
+no image field in `CreateWatchDto`. Needed:
 
 ```
-POST   /admin/watches/:id/images      (a plain upload, for photographs that
-                                       should not go through generation)
+POST   /admin/watches/:id/images      (multipart, backend-managed storage)
 DELETE /admin/watches/:id/images/:imageId
 PATCH  /admin/watches/:id/images/order
 PATCH  /admin/watches/:id/images/:imageId/primary
 ```
 
-Until these exist, an image cannot be removed, reordered or re-designated from
-this application, and the studio panel says nothing it cannot do. The desktop
-client must never become image storage; it uploads and the backend owns the
-files.
+The desktop client must never become image storage; it uploads and the backend
+owns the files.
 
 ### 3. An admin watch-detail endpoint
 
