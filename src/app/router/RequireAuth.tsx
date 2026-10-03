@@ -1,4 +1,4 @@
-import { Box, CircularProgress } from '@mui/material';
+import { Box, Skeleton, Stack } from '@mui/material';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth/auth-context';
 import { routes } from '@/config/routes';
@@ -19,8 +19,12 @@ export function RequireAuth() {
     // Reading the OS keychain is asynchronous. Redirecting to /login during
     // that window would flash the sign-in form at every launch.
     return (
-      <Box sx={{ height: '100%', display: 'grid', placeItems: 'center' }}>
-        <CircularProgress size={22} aria-label="Restoring your session" />
+      <Box sx={{ height: '100%', display: 'grid', placeItems: 'center', p: 3 }}>
+        <Stack spacing={1} aria-busy="true" aria-label="Restoring your session" sx={{ width: 'min(100%, 280px)' }}>
+          <Skeleton variant="rounded" height={36} />
+          <Skeleton variant="rounded" height={12} width="72%" />
+          <Skeleton variant="rounded" height={12} width="56%" />
+        </Stack>
       </Box>
     );
   }

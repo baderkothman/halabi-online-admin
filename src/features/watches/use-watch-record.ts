@@ -8,8 +8,8 @@ import type { AdminWatchListItem, Category } from '@/types/domain';
  *
  * There is no admin watch-detail endpoint, so a watch's fields come from:
  *
- *  - the admin LIST, which carries the core fields but not the description,
- *    specifications or category;
+ *  - the admin LIST, which carries the core fields and images but not the
+ *    description, specifications or category;
  *  - the PUBLIC detail endpoint, which carries the rest but only for watches
  *    whose visibility is `PUBLIC`.
  *
@@ -76,6 +76,11 @@ export function useWatchRecord(id: string | undefined): WatchRecord {
             availability: existing.availability,
             visibility: existing.visibility,
             featured: existing.featured,
+            images: existing.images.map((image) => ({
+              url: image.url,
+              alt: image.alt,
+              isPrimary: image.isPrimary,
+            })),
           }
         : undefined,
     [existing, ready, full],

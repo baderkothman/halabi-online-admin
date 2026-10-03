@@ -23,6 +23,7 @@ describe('listWatches', () => {
             id: '1', slug: 'omega-seamaster', name: 'Seamaster 300', brand: 'Omega',
             reference: null, publicPrice: '4200.00', availability: 'AVAILABLE',
             visibility: 'PUBLIC', featured: true, createdAt: '2026-01-01T00:00:00Z',
+            images: [{ url: 'https://cdn.example.com/seamaster.jpg', alt: 'Front view', isPrimary: true }],
           },
         ],
       }),
@@ -31,6 +32,9 @@ describe('listWatches', () => {
     const [watch] = await listWatches();
     expect(watch?.publicPrice).toBe(4200);
     expect(watch?.reference).toBeNull();
+    expect(watch?.images).toEqual([
+      { url: 'https://cdn.example.com/seamaster.jpg', alt: 'Front view', isPrimary: true },
+    ]);
   });
 
   it('keeps a null price null rather than turning it into zero', async () => {

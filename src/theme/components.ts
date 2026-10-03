@@ -28,6 +28,25 @@ export const components: Components<Theme> = {
         border: `2px solid ${colors.canvas}`,
       },
       '*::-webkit-scrollbar-track': { backgroundColor: 'transparent' },
+      // Every Dialog/Menu/Snackbar fade rides this one rule rather than each
+      // needing its own reduced-motion check.
+      '@media (prefers-reduced-motion: reduce)': {
+        '*, *::before, *::after': {
+          animationDuration: '0.01ms !important',
+          animationIterationCount: '1 !important',
+          transitionDuration: '0.01ms !important',
+          scrollBehavior: 'auto !important',
+        },
+      },
+      // The desktop shell stays dense for pointer users. On a hybrid/touch
+      // device, controls expand to the minimum comfortable hit area without
+      // changing the visual scale of the desktop workspace.
+      '@media (pointer: coarse)': {
+        '.MuiButton-root': { minHeight: 44 },
+        '.MuiIconButton-root': { minWidth: 44, minHeight: 44 },
+        '.MuiMenuItem-root': { minHeight: 44 },
+        '.MuiListItemButton-root': { minHeight: 44 },
+      },
     },
   },
 

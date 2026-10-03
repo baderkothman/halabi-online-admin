@@ -16,6 +16,12 @@ const optionalText = z
   .transform((value) => (value === '' ? undefined : value))
   .optional();
 
+const imageSchema = z.object({
+  url: z.string().trim().min(1, 'Add an image URL.').url('Enter a complete image URL.').max(2000, 'Keep the image URL under 2,000 characters.'),
+  alt: z.string().trim().max(200, 'Keep alt text under 200 characters.').transform((value) => (value === '' ? undefined : value)).optional(),
+  isPrimary: z.boolean(),
+});
+
 export const watchSchema = z.object({
   name: z.string().trim().min(1, 'A name is required.').max(200, 'Keep the name under 200 characters.'),
   brand: z.string().trim().min(1, 'A brand is required.').max(120, 'Keep the brand under 120 characters.'),
@@ -41,6 +47,7 @@ export const watchSchema = z.object({
   availability: z.enum(WATCH_AVAILABILITY),
   visibility: z.enum(WATCH_VISIBILITY),
   featured: z.boolean(),
+  images: z.array(imageSchema).max(12, 'Add up to 12 images.'),
 });
 
 export type WatchFormValues = z.input<typeof watchSchema>;

@@ -73,10 +73,10 @@ storefront links to the piece by it.
 
 Leaving with unsaved changes asks first.
 
-**Not present:** image upload and free-form specifications. The database has a
-`watch_images` table and a `specifications` column; the API has no endpoint that
-writes either. See
-[API-INTEGRATION.md](API-INTEGRATION.md#2-watch-images).
+Image URLs, alt text and a cover-image choice can be added to the watch form.
+The database stores the ordered `watch_images` rows; binary upload and storage
+management are not part of the desktop client. Free-form specifications remain
+out of the form. See [API-INTEGRATION.md](API-INTEGRATION.md#2-watch-images).
 
 ## Inquiries
 

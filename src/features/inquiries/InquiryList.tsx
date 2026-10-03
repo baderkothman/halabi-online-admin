@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
 import { StatusChip } from '@/components/data-display/StatusChip';
 import { getInquiryStatus } from '@/config/inquiry-status';
@@ -20,9 +21,35 @@ export function InquiryList({
   selectedId: string | undefined;
   onSelect: (id: string) => void;
 }) {
+  const optionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const focusId = selectedId && inquiries.some((inquiry) => inquiry.id === selectedId)
+    ? selectedId
+    : inquiries[0]?.id;
+
+  const handleKeyDown = (event: React.KeyboardEvent, index: number, id: string) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onSelect(id);
+      return;
+    }
+
+    let nextIndex = index;
+    if (event.key === 'ArrowDown') nextIndex = Math.min(index + 1, inquiries.length - 1);
+    if (event.key === 'ArrowUp') nextIndex = Math.max(index - 1, 0);
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = inquiries.length - 1;
+    if (nextIndex === index) return;
+
+    event.preventDefault();
+    const next = inquiries[nextIndex];
+    if (!next) return;
+    optionRefs.current[next.id]?.focus();
+    onSelect(next.id);
+  };
+
   return (
     <Box role="listbox" aria-label="Inquiries" tabIndex={-1}>
-      {inquiries.map((inquiry) => {
+      {inquiries.map((inquiry, index) => {
         const status = getInquiryStatus(inquiry.status);
         const selected = inquiry.id === selectedId;
         const unread = inquiry.unreadCount > 0;
@@ -32,14 +59,14 @@ export function InquiryList({
             key={inquiry.id}
             role="option"
             aria-selected={selected}
-            tabIndex={0}
-            onClick={() => onSelect(inquiry.id)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                onSelect(inquiry.id);
-              }
+            aria-setsize={inquiries.length}
+            aria-posinset={index + 1}
+            tabIndex={inquiry.id === focusId ? 0 : -1}
+            ref={(node: HTMLDivElement | null) => {
+              optionRefs.current[inquiry.id] = node;
             }}
+            onClick={() => onSelect(inquiry.id)}
+            onKeyDown={(event) => handleKeyDown(event, index, inquiry.id)}
             sx={{
               px: 1.5, py: 1.125, cursor: 'pointer',
               borderBottom: 1, borderColor: 'line.subtle',

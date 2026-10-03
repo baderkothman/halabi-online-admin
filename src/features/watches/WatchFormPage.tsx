@@ -7,7 +7,7 @@ import { PageBody } from '@/app/layouts/AdminLayout';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import {
-  AvailabilityFields, BasicInformationFields, ClassificationFields, PricingFields, SpecificationFields,
+  AvailabilityFields, BasicInformationFields, ClassificationFields, ImageFields, PricingFields, SpecificationFields,
 } from './WatchFormFields';
 import { useCreateWatch, useUpdateWatch } from './queries';
 import { useWatchRecord } from './use-watch-record';
@@ -19,7 +19,7 @@ import { ValidationError, toDisplayMessage } from '@/services/api';
 const emptyForm: WatchFormValues = {
   name: '', brand: '', slug: '', reference: '', description: '', publicPrice: '',
   condition: '', movement: '', caseMaterial: '', dialColor: '', categoryId: '',
-  availability: 'AVAILABLE', visibility: 'PRIVATE', featured: false,
+  availability: 'AVAILABLE', visibility: 'PRIVATE', featured: false, images: [],
 };
 
 /**
@@ -29,12 +29,6 @@ const emptyForm: WatchFormValues = {
  * submitting, guarding against discarded edits; the field groups themselves
  * live in `WatchFormFields.tsx`.
  *
- * ── What is deliberately absent ────────────────────────────────────────────
- * Image management and free-form specifications. The database has a
- * `watch_images` table and a `specifications` jsonb column, but no API endpoint
- * writes either — there is no upload route, and neither appears in
- * `CreateWatchDto`. An uploader that cannot save is a placeholder pretending to
- * be a feature. Both are recorded in docs/API-INTEGRATION.md.
  */
 export function WatchFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -169,6 +163,7 @@ export function WatchFormPage() {
         />
         <PricingFields {...fields} />
         <SpecificationFields {...fields} />
+        <ImageFields {...fields} setValue={setValue} />
         <ClassificationFields
           control={control}
           categories={record.categories}

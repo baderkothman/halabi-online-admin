@@ -17,10 +17,10 @@ import {
  *    at thousands — the backend requirement is recorded in
  *    docs/API-INTEGRATION.md.
  *
- * 2. There is no admin watch-detail endpoint. Full detail (description, images,
- *    category, specifications) is only available from the PUBLIC endpoint by
- *    slug, which filters to `visibility = 'PUBLIC'`. An unpublished watch has no
- *    detail source at all, which the detail screen has to handle honestly.
+ * 2. There is no admin watch-detail endpoint. Descriptions, category and
+ *    specifications are only available from the PUBLIC endpoint by slug,
+ *    while images are included in the admin list so unpublished watches can
+ *    still be edited.
  */
 
 function toListItem(raw: unknown): AdminWatchListItem {
@@ -37,6 +37,16 @@ function toListItem(raw: unknown): AdminWatchListItem {
     visibility: toEnum(row.visibility, WATCH_VISIBILITY, 'PRIVATE'),
     featured: toBoolean(row.featured),
     createdAt: toText(row.createdAt),
+    images: asArray(row.images).map(toImage),
+  };
+}
+
+function toImage(raw: unknown) {
+  const image = asRecord(raw);
+  return {
+    url: toText(image.url),
+    alt: toText(image.alt),
+    isPrimary: toBoolean(image.isPrimary),
   };
 }
 
@@ -91,14 +101,7 @@ function toWatchDetail(raw: unknown): WatchDetail {
     dialColor: toStringOrNull(row.dialColor),
     featured: toBoolean(row.featured),
     category: row.category ? { slug: toText(category.slug), name: toText(category.name) } : null,
-    images: asArray(row.images).map((image) => {
-      const record = asRecord(image);
-      return {
-        url: toText(record.url),
-        alt: toText(record.alt),
-        isPrimary: toBoolean(record.isPrimary),
-      };
-    }),
+    images: asArray(row.images).map(toImage),
     createdAt: toText(row.createdAt),
   };
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, CircularProgress, Stack } from '@mui/material';
+import { Box, Skeleton, Stack } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -31,9 +31,16 @@ export function InquiryDetailPane({ id }: { id: string }) {
 
   if (inquiry.isPending) {
     return (
-      <Box sx={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-        <CircularProgress size={20} aria-label="Loading inquiry" />
-      </Box>
+      <Stack spacing={2} aria-busy="true" aria-label="Loading inquiry" sx={{ height: '100%', p: 2 }}>
+        <Skeleton variant="text" width="42%" height={28} />
+        <Skeleton variant="text" width="68%" height={18} />
+        <Stack direction="row" spacing={1}>
+          <Skeleton variant="rounded" width={86} height={32} />
+          <Skeleton variant="rounded" width={68} height={32} />
+        </Stack>
+        <Skeleton variant="rounded" height={96} />
+        <Skeleton variant="rounded" height={72} />
+      </Stack>
     );
   }
 

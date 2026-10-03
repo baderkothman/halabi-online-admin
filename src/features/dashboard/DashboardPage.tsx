@@ -1,4 +1,4 @@
-import { Box, Button, Paper, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Button, Fade, Paper, Skeleton, Stack, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { Link as RouterLink } from 'react-router-dom';
 import { PageBody } from '@/app/layouts/AdminLayout';
@@ -11,6 +11,7 @@ import { queryKeys } from '@/services/query-keys';
 import { getInquiryStatus } from '@/config/inquiry-status';
 import { formatRelative } from '@/lib/format';
 import { routes } from '@/config/routes';
+import { duration } from '@/theme';
 
 /**
  * The operational dashboard.
@@ -38,10 +39,13 @@ export function DashboardPage() {
       <Box
         sx={{
           display: 'grid',
-          // Four metrics on a wide window, two on a narrow one. Never one per
-          // row — a single tall column of numbers reads as padding.
+          // A compact summary strip keeps the queue visually dominant. It is
+          // still scannable at a narrow width without becoming four floating
+          // cards competing with the actual work surface.
           gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-          gap: 1.5,
+          borderTop: 1,
+          borderBottom: 1,
+          borderColor: 'line.subtle',
           mb: 2,
         }}
       >
@@ -97,48 +101,50 @@ export function DashboardPage() {
         )}
 
         {recent.isSuccess && recent.data.length > 0 && (
-          <Stack divider={<Box sx={{ borderBottom: 1, borderColor: 'line.subtle' }} />}>
-            {recent.data.map((inquiry) => {
-              const status = getInquiryStatus(inquiry.status);
-              return (
-                <Stack
-                  key={inquiry.id}
-                  component={RouterLink}
-                  to={routes.inquiry(inquiry.id)}
-                  direction="row"
-                  alignItems="center"
-                  spacing={1.5}
-                  sx={{
-                    px: 1.5, py: 1, textDecoration: 'none', color: 'inherit',
-                    '&:hover': { bgcolor: 'surfaceTone.sunken' },
-                    '&:focus-visible': { outline: 2, outlineColor: 'secondary.main', outlineOffset: -2 },
-                  }}
-                >
-                  <Box sx={{ minWidth: 0, flex: 1 }}>
-                    <Stack direction="row" spacing={0.75} alignItems="center">
-                      <Typography variant="subtitle2" noWrap>
-                        {inquiry.customerName}
+          <Fade in appear timeout={duration.standard}>
+            <Stack divider={<Box sx={{ borderBottom: 1, borderColor: 'line.subtle' }} />}>
+              {recent.data.map((inquiry) => {
+                const status = getInquiryStatus(inquiry.status);
+                return (
+                  <Stack
+                    key={inquiry.id}
+                    component={RouterLink}
+                    to={routes.inquiry(inquiry.id)}
+                    direction="row"
+                    alignItems="center"
+                    spacing={1.5}
+                    sx={{
+                      px: 1.5, py: 1, textDecoration: 'none', color: 'inherit',
+                      '&:hover': { bgcolor: 'surfaceTone.sunken' },
+                      '&:focus-visible': { outline: 2, outlineColor: 'secondary.main', outlineOffset: -2 },
+                    }}
+                  >
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Stack direction="row" spacing={0.75} alignItems="center">
+                        <Typography variant="subtitle2" noWrap>
+                          {inquiry.customerName}
+                        </Typography>
+                        {inquiry.unreadCount > 0 && (
+                          <Box
+                            component="span"
+                            aria-label={`${inquiry.unreadCount} unread`}
+                            sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main', flexShrink: 0 }}
+                          />
+                        )}
+                      </Stack>
+                      <Typography variant="caption" color="ink.muted" noWrap sx={{ display: 'block' }}>
+                        {inquiry.watchBrand} {inquiry.watchName}
                       </Typography>
-                      {inquiry.unreadCount > 0 && (
-                        <Box
-                          component="span"
-                          aria-label={`${inquiry.unreadCount} unread`}
-                          sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main', flexShrink: 0 }}
-                        />
-                      )}
-                    </Stack>
-                    <Typography variant="caption" color="ink.muted" noWrap sx={{ display: 'block' }}>
-                      {inquiry.watchBrand} {inquiry.watchName}
+                    </Box>
+                    <StatusChip label={status.label} tone={status.tone} sx={{ flexShrink: 0 }} />
+                    <Typography variant="caption" color="ink.muted" sx={{ width: 64, textAlign: 'right', flexShrink: 0 }}>
+                      {formatRelative(inquiry.createdAt)}
                     </Typography>
-                  </Box>
-                  <StatusChip label={status.label} tone={status.tone} sx={{ flexShrink: 0 }} />
-                  <Typography variant="caption" color="ink.muted" sx={{ width: 64, textAlign: 'right', flexShrink: 0 }}>
-                    {formatRelative(inquiry.createdAt)}
-                  </Typography>
-                </Stack>
-              );
-            })}
-          </Stack>
+                  </Stack>
+                );
+              })}
+            </Stack>
+          </Fade>
         )}
       </Panel>
     </PageBody>
@@ -162,25 +168,35 @@ function Metric({
   emphasis?: boolean;
 }) {
   return (
-    <Paper variant="outlined" sx={{ p: 1.5 }}>
+    <Box
+      sx={{
+        p: 1.5,
+        minWidth: 0,
+        '& + &': { borderLeft: 1, borderColor: 'line.subtle' },
+      }}
+    >
       <Typography variant="overline" color="ink.muted" component="p">
         {label}
       </Typography>
       {loading ? (
         <Skeleton width={44} height={30} sx={{ my: 0.25 }} />
       ) : (
-        <Typography
-          sx={{
-            fontSize: 26, fontWeight: 600, lineHeight: 1.2, fontVariantNumeric: 'tabular-nums',
-            color: emphasis ? 'error.main' : 'ink.primary',
-          }}
-        >
-          {value ?? '—'}
-        </Typography>
+        // Fades in rather than popping against the skeleton it replaces — the
+        // figure is arriving, not just appearing.
+        <Fade in appear timeout={duration.fast}>
+          <Typography
+            sx={{
+              fontSize: 26, fontWeight: 600, lineHeight: 1.2, fontVariantNumeric: 'tabular-nums',
+              color: emphasis ? 'error.main' : 'ink.primary',
+            }}
+          >
+            {value ?? '—'}
+          </Typography>
+        </Fade>
       )}
       <Typography variant="caption" color="ink.muted">
         {hint}
       </Typography>
-    </Paper>
+    </Box>
   );
 }

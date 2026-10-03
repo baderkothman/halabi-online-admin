@@ -1,7 +1,7 @@
 import { Badge, Box, List, ListItemButton, ListItemIcon, ListItemText, Stack, Tooltip, Typography } from '@mui/material';
 import { NavLink, useLocation } from 'react-router-dom';
 import { navigation, type NavItem } from './navigation';
-import { layout } from '@/theme';
+import { duration, layout } from '@/theme';
 
 /**
  * The permanent left navigation.
@@ -33,14 +33,13 @@ export function Sidebar({
         bgcolor: 'surfaceTone.inverse',
         borderRight: 1,
         borderColor: 'line.inverse',
-        transition: 'width 140ms ease',
         overflow: 'hidden',
       }}
     >
       <Stack
         direction="row"
         alignItems="center"
-        spacing={1}
+        spacing={collapsed ? 0 : 1}
         sx={{ height: layout.topBarHeight, px: collapsed ? 0 : 1.75, flexShrink: 0, justifyContent: collapsed ? 'center' : 'flex-start' }}
       >
         {/* The mark: a minute-track tick, the storefront's one expressive device. */}
@@ -54,22 +53,30 @@ export function Sidebar({
         >
           <Box sx={{ width: 1.5, height: 7, bgcolor: 'ink.inverse', borderRadius: 1, transform: 'translateY(-2px)' }} />
         </Box>
-        {!collapsed && (
-          <Box sx={{ minWidth: 0 }}>
+        <Box
+          sx={{
+            minWidth: 0,
+            overflow: 'hidden',
+            flex: collapsed ? '0 0 0' : '1 1 auto',
+            opacity: collapsed ? 0 : 1,
+            transform: collapsed ? 'translateX(-4px)' : 'translateX(0)',
+            visibility: collapsed ? 'hidden' : 'visible',
+            transition: `opacity ${duration.standard}ms ease, transform ${duration.standard}ms ease`,
+          }}
+        >
             <Typography variant="subtitle2" color="ink.inverse" noWrap sx={{ lineHeight: 1.2 }}>
               Halabi Online
             </Typography>
             <Typography variant="caption" color="ink.inverseMuted" noWrap sx={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
               Administration
             </Typography>
-          </Box>
-        )}
+        </Box>
       </Stack>
 
       <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', px: collapsed ? 0.5 : 1, pb: 1 }}>
         {navigation.map((group) => (
           <Box key={group.label} sx={{ mt: 1.5 }}>
-            {!collapsed && (
+            {!collapsed ? (
               <Typography
                 variant="overline"
                 component="p"
@@ -78,7 +85,7 @@ export function Sidebar({
               >
                 {group.label}
               </Typography>
-            )}
+            ) : null}
             <List dense disablePadding>
               {group.items.map((item) => {
                 const active = pathname === item.match || pathname.startsWith(`${item.match}/`);
@@ -115,26 +122,37 @@ export function Sidebar({
                           <item.icon sx={{ fontSize: 18 }} />
                         </Badge>
                       </ListItemIcon>
-                      {!collapsed && (
-                        <>
-                          <ListItemText
-                            primary={item.label}
-                            slotProps={{ primary: { fontSize: '0.8125rem', fontWeight: active ? 600 : 400 } }}
-                          />
-                          {count > 0 && (
-                            <Box
-                              component="span"
-                              sx={{
-                                ml: 1, px: 0.625, minWidth: 18, textAlign: 'center',
-                                fontSize: 10, fontWeight: 600, lineHeight: '16px', borderRadius: 1,
-                                bgcolor: 'error.main', color: 'common.white',
-                              }}
-                            >
-                              {count > 99 ? '99+' : count}
-                            </Box>
-                          )}
-                        </>
-                      )}
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          minWidth: 0,
+                          overflow: 'hidden',
+                          flex: collapsed ? '0 0 0' : '1 1 auto',
+                          opacity: collapsed ? 0 : 1,
+                          transform: collapsed ? 'translateX(-4px)' : 'translateX(0)',
+                          visibility: collapsed ? 'hidden' : 'visible',
+                          transition: `opacity ${duration.standard}ms ease, transform ${duration.standard}ms ease`,
+                        }}
+                      >
+                        <ListItemText
+                          primary={item.label}
+                          sx={{ whiteSpace: 'nowrap' }}
+                          slotProps={{ primary: { fontSize: '0.8125rem', fontWeight: active ? 600 : 400 } }}
+                        />
+                        {count > 0 && (
+                          <Box
+                            component="span"
+                            sx={{
+                              ml: 1, px: 0.625, minWidth: 18, textAlign: 'center',
+                              fontSize: 10, fontWeight: 600, lineHeight: '16px', borderRadius: 1,
+                              bgcolor: 'error.main', color: 'common.white', flexShrink: 0,
+                            }}
+                          >
+                            {count > 99 ? '99+' : count}
+                          </Box>
+                        )}
+                      </Box>
                     </ListItemButton>
                   </Tooltip>
                 );

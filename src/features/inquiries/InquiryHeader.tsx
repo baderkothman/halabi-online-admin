@@ -39,7 +39,7 @@ export function InquiryHeader({
 
   return (
     <Box sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: 'line.subtle', flexShrink: 0 }}>
-      <Stack direction="row" alignItems="flex-start" spacing={2}>
+      <Stack direction={{ xs: 'column', md: 'row' }} alignItems="flex-start" spacing={2}>
         <Box sx={{ minWidth: 0, flex: 1 }}>
           <Typography variant="h3" noWrap>
             {inquiry.customerName}
@@ -54,7 +54,7 @@ export function InquiryHeader({
           </Typography>
         </Box>
 
-        <Stack direction="row" spacing={0.75} alignItems="center" sx={{ flexShrink: 0 }}>
+        <Stack direction="row" spacing={0.75} alignItems="center" sx={{ flexShrink: 0, flexWrap: 'wrap', rowGap: 0.75 }}>
           <StatusChip label={status.label} tone={status.tone} />
           {status.nextStatuses.length > 0 && (
             <Button
@@ -142,11 +142,18 @@ export function InquiryHeader({
         </Tooltip>
       </Stack>
 
-      <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(3, minmax(0, 1fr))' },
+          gap: 1.5,
+          mt: 1,
+        }}
+      >
         <Field label="Watch" value={`${inquiry.watchBrand} ${inquiry.watchName}`} />
         {inquiry.email && <Field label="Email" value={inquiry.email} />}
         {inquiry.phone && <Field label="Phone" value={inquiry.phone} />}
-      </Stack>
+      </Box>
     </Box>
   );
 }
@@ -161,7 +168,12 @@ function Field({ label, value }: { label: string; value: string }) {
       >
         {label}
       </Typography>
-      <Typography variant="body2" noWrap>
+      <Typography
+        variant="body2"
+        noWrap
+        title={value}
+        sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}
+      >
         {value}
       </Typography>
     </Box>

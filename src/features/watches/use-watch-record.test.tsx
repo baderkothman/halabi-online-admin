@@ -28,6 +28,7 @@ const watch: AdminWatchListItem = {
   visibility: 'PRIVATE',
   featured: false,
   createdAt: '2026-01-01T00:00:00Z',
+  images: [],
 };
 
 function wrapper(client: QueryClient) {

@@ -98,6 +98,31 @@ export const shadow = {
   dialog: '0 16px 48px rgba(20, 29, 38, 0.18)',
 } as const;
 
+/**
+ * Motion. The app has no gesture-driven or physics-based interaction — every
+ * transition here is a deterministic, hand-timed CSS move, not a spring — so
+ * these are just the two curves and three speeds everything should draw from,
+ * instead of each component inventing its own `ease` and guessing a duration.
+ * Same values as the storefront's `theme/tokens.ts`, so the two apps share one
+ * motion vocabulary even though their component libraries differ.
+ */
+export const duration = {
+  /** Hover/press state changes. */
+  fast: 100,
+  /** Sidebar collapse, menu and tooltip reveals. */
+  standard: 140,
+  /** Dialogs — a bigger surface arriving. */
+  slow: 220,
+} as const;
+
+export const easing = {
+  /** Arriving — decelerate. */
+  enter: 'cubic-bezier(0.16, 1, 0.3, 1)',
+  /** Leaving — accelerate. */
+  exit: 'cubic-bezier(0.4, 0, 1, 1)',
+  standard: 'cubic-bezier(0.2, 0, 0, 1)',
+} as const;
+
 /** Fixed chrome dimensions, shared by the layout and the components that offset against it. */
 export const layout = {
   sidebarWidth: 236,

@@ -1,5 +1,7 @@
-import { Box, Button, Checkbox, FormControlLabel, MenuItem, Stack, TextField, Typography } from '@mui/material';
-import { Controller, type Control, type FieldErrors, type UseFormRegister, type UseFormSetValue } from 'react-hook-form';
+import { Box, Button, Checkbox, FormControlLabel, IconButton, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { Controller, useFieldArray, type Control, type FieldErrors, type UseFormRegister, type UseFormSetValue } from 'react-hook-form';
 import type { ReactNode } from 'react';
 import type { WatchFormValues } from './schema';
 import { suggestSlug } from './schema';
@@ -130,6 +132,92 @@ export function SpecificationFields({ register }: FieldGroupProps) {
         <TextField {...register('caseMaterial')} label="Case material" />
         <TextField {...register('dialColor')} label="Dial colour" />
       </Stack>
+    </Section>
+  );
+}
+
+export function ImageFields({ register, control, errors, setValue }: FieldGroupProps & {
+  setValue: UseFormSetValue<WatchFormValues>;
+}) {
+  const { fields, append, remove } = useFieldArray({ control, name: 'images' });
+
+  const markPrimary = (index: number) => {
+    fields.forEach((_, fieldIndex) => {
+      setValue(`images.${fieldIndex}.isPrimary`, fieldIndex === index, { shouldDirty: true });
+    });
+  };
+
+  return (
+    <Section title="Images">
+      <Typography variant="body2" color="ink.muted">
+        Add image URLs for the storefront gallery. The cover image appears first on catalogue cards.
+      </Typography>
+
+      <Stack spacing={1.25}>
+        {fields.map((field, index) => {
+          const imageError = errors.images?.[index];
+          return (
+            <Box
+              key={field.id}
+              sx={{ p: 1.25, border: 1, borderColor: 'line.subtle', borderRadius: 1, bgcolor: 'surfaceTone.sunken' }}
+            >
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} alignItems={{ sm: 'flex-start' }}>
+                <TextField
+                  {...register(`images.${index}.url`)}
+                  label={`Image ${index + 1} URL`}
+                  required
+                  error={Boolean(imageError?.url)}
+                  helperText={imageError?.url?.message}
+                  placeholder="https://..."
+                  sx={{ flex: 1.35 }}
+                />
+                <TextField
+                  {...register(`images.${index}.alt`)}
+                  label="Alt text"
+                  error={Boolean(imageError?.alt)}
+                  helperText={imageError?.alt?.message ?? 'Optional; defaults to a generic watch description.'}
+                  sx={{ flex: 1 }}
+                />
+                <Controller
+                  name={`images.${index}.isPrimary`}
+                  control={control}
+                  render={({ field: primaryField }) => (
+                    <FormControlLabel
+                      sx={{ minWidth: 72, mt: { sm: 0.6 } }}
+                      control={
+                        <Checkbox
+                          checked={Boolean(primaryField.value)}
+                          onChange={() => markPrimary(index)}
+                          inputRef={primaryField.ref}
+                        />
+                      }
+                      label="Cover"
+                    />
+                  )}
+                />
+                <IconButton
+                  type="button"
+                  onClick={() => remove(index)}
+                  aria-label={`Remove image ${index + 1}`}
+                  sx={{ mt: { sm: 0.35 }, alignSelf: { xs: 'flex-end', sm: 'center' } }}
+                >
+                  <DeleteOutlineIcon fontSize="small" />
+                </IconButton>
+              </Stack>
+            </Box>
+          );
+        })}
+      </Stack>
+
+      <Button
+        type="button"
+        variant="outlined"
+        startIcon={<AddPhotoAlternateOutlinedIcon />}
+        onClick={() => append({ url: '', alt: '', isPrimary: fields.length === 0 })}
+        sx={{ alignSelf: 'flex-start' }}
+      >
+        Add image
+      </Button>
     </Section>
   );
 }

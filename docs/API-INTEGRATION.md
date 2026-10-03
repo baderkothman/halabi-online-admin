@@ -49,9 +49,9 @@ security: `RolesGuard` rejects the same token at every admin endpoint anyway.
 
 | Endpoint | Notes |
 | --- | --- |
-| `GET /api/v1/admin/dashboard/watches` | **No query parameters.** Returns the whole catalogue, ordered by `updated_at DESC`. |
-| `POST /api/v1/admin/dashboard/watches` | `CreateWatchDto`. Response projects only five columns. |
-| `PATCH /api/v1/admin/dashboard/watches/:id` | Same DTO, all fields optional. SQL is `COALESCE($n, column)` per field, so an **omitted** key means "leave alone" — the client prunes `undefined` keys before sending rather than passing them through. |
+| `GET /api/v1/admin/dashboard/watches` | **No query parameters.** Returns the whole catalogue, ordered by `updated_at DESC`, including image rows for edit forms. |
+| `POST /api/v1/admin/dashboard/watches` | `CreateWatchDto`, including optional URL-based `images`. The response projects the saved watch row. |
+| `PATCH /api/v1/admin/dashboard/watches/:id` | Same DTO, all fields optional. SQL is `COALESCE($n, column)` per scalar field, so an **omitted** key means "leave alone". When `images` is present, the saved image set is replaced; `images: []` clears it. |
 | `GET /api/v1/public/watches/:slug` | The only source of full detail (description, images, category). It filters to `visibility = 'PUBLIC'`, so an unpublished watch has **no** detail source. |
 | `GET /api/v1/public/categories` | Read-only; used to populate the category selector. |
 
@@ -94,7 +94,8 @@ invalidating a prefix reaches every list and detail beneath it.
 
 These are gaps in the API, not unfinished work here. Each was verified absent by
 reading the API's controllers. **The database has tables for most of them** —
-`watch_images`, `categories`, `sales`, `testimonials` — but no REST surface.
+`categories`, `sales`, `testimonials` — but no REST surface. Watch images are
+the exception: they are now managed by the watch create/update endpoints.
 
 ### 1. Server-side filtering for the admin lists — *highest priority*
 
@@ -115,19 +116,10 @@ nothing else in either feature changes.
 
 ### 2. Watch images
 
-`watch_images` exists in the schema, `WatchDetail.images` is returned by the
-public endpoint, and **nothing can write a row**. There is no upload route and
-no image field in `CreateWatchDto`. Needed:
-
-```
-POST   /admin/watches/:id/images      (multipart, backend-managed storage)
-DELETE /admin/watches/:id/images/:imageId
-PATCH  /admin/watches/:id/images/order
-PATCH  /admin/watches/:id/images/:imageId/primary
-```
-
-The desktop client must never become image storage; it uploads and the backend
-owns the files.
+`watch_images` is managed by the watch create/update endpoints. The admin form
+accepts absolute HTTP(S) image URLs, alt text and a cover-image flag, and the API
+stores the ordered rows. This is URL-based image management; backend-owned file
+uploads and deletion/reordering endpoints remain a future storage improvement.
 
 ### 3. An admin watch-detail endpoint
 

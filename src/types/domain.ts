@@ -48,9 +48,8 @@ export interface AuthSession {
 /**
  * A row from `GET /admin/dashboard/watches`.
  *
- * Note that this list projection is narrower than the public watch detail: the
- * admin list query selects only these columns. Anything else — images,
- * specifications, category name — needs the public detail endpoint by slug.
+ * The list includes images so the edit form can manage unpublished watches too;
+ * descriptions and specifications still come from the public detail endpoint.
  */
 export interface AdminWatchListItem {
   id: string;
@@ -63,6 +62,7 @@ export interface AdminWatchListItem {
   visibility: WatchVisibility;
   featured: boolean;
   createdAt: string;
+  images: WatchImage[];
 }
 
 /** `GET /public/watches/:slug` — the only endpoint exposing full watch detail. */
@@ -91,6 +91,12 @@ export interface WatchImage {
   isPrimary: boolean;
 }
 
+export interface WatchImageInput {
+  url: string;
+  alt?: string | undefined;
+  isPrimary?: boolean | undefined;
+}
+
 export interface Category {
   id: string;
   slug: string;
@@ -115,6 +121,7 @@ export interface WatchWriteInput {
   categoryId?: string | undefined;
   featured?: boolean | undefined;
   visibility?: WatchVisibility | undefined;
+  images?: WatchImageInput[] | undefined;
 }
 
 /** A row from `GET /admin/inquiries`. */
