@@ -6,6 +6,7 @@ import { QueryProvider } from './providers/QueryProvider';
 import { AuthProvider } from './providers/AuthProvider';
 import { SnackbarProvider } from './providers/SnackbarProvider';
 import { AppErrorBoundary } from './error-boundary/AppErrorBoundary';
+import { UpdateNotifier } from './updater/UpdateNotifier';
 
 /**
  * Provider order matters:
@@ -25,6 +26,7 @@ export function App() {
           <AuthProvider>
             <SnackbarProvider>
               <RouterProvider router={router} />
+              <UpdateNotifier />
             </SnackbarProvider>
           </AuthProvider>
         </QueryProvider>
