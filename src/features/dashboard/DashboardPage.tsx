@@ -47,6 +47,13 @@ export function DashboardPage() {
           borderBottom: 1,
           borderColor: 'line.subtle',
           mb: 2,
+          // Dividers follow the grid's own wrapping rather than DOM order, so
+          // the two-column mobile layout gets a row divider instead of a
+          // stray left border under the first cell.
+          '& > *': { borderColor: 'line.subtle' },
+          '& > *:nth-of-type(2n)': { borderLeft: { xs: 1, md: 0 } },
+          '& > *:nth-of-type(n+3)': { borderTop: { xs: 1, md: 0 } },
+          '& > *:not(:nth-of-type(1))': { borderLeft: { md: 1 } },
         }}
       >
         <Metric
@@ -169,11 +176,7 @@ function Metric({
 }) {
   return (
     <Box
-      sx={{
-        p: 1.5,
-        minWidth: 0,
-        '& + &': { borderLeft: 1, borderColor: 'line.subtle' },
-      }}
+      sx={{ p: 1.5, minWidth: 0 }}
     >
       <Typography variant="overline" color="ink.muted" component="p">
         {label}

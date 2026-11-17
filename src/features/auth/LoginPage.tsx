@@ -66,10 +66,24 @@ export function LoginPage() {
             aria-hidden
             sx={{
               width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
-              border: 1.5, borderColor: 'ink.primary', display: 'grid', placeItems: 'center',
+              border: 1.5, borderColor: 'ink.primary', position: 'relative',
             }}
           >
-            <Box sx={{ width: 1.5, height: 8, bgcolor: 'ink.primary', borderRadius: 1, transform: 'translateY(-2px)' }} />
+            {/* A watch face, not an abstract mark — the catalogue this app runs is the reason to draw one.
+                Hands set to ten past ten: the angle watch photography always uses, because it frames the
+                dial without crossing the brand name. */}
+            <Box
+              sx={{
+                position: 'absolute', left: '50%', bottom: '50%', width: 1.5, height: 7, bgcolor: 'ink.primary',
+                borderRadius: 1, transformOrigin: 'bottom center', transform: 'translateX(-50%) rotate(-60deg)',
+              }}
+            />
+            <Box
+              sx={{
+                position: 'absolute', left: '50%', bottom: '50%', width: 1.5, height: 9.5, bgcolor: 'ink.primary',
+                borderRadius: 1, transformOrigin: 'bottom center', transform: 'translateX(-50%) rotate(60deg)',
+              }}
+            />
           </Box>
           <Box>
             <Typography variant="subtitle1" sx={{ lineHeight: 1.2 }}>
