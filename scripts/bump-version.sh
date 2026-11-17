@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
-# Bumps the app version everywhere it must stay in sync, then commits and
-# tags the release. Pushing is a separate, explicit step (see the printed
-# instructions at the end) — this script never pushes on its own.
+# Bumps the app version everywhere it must stay in sync and commits it.
+# CI (.github/workflows/build-desktop.yml) tags and releases every push to
+# main automatically, auto-incrementing the patch version unless it sees the
+# pushed commit already carries a version ahead of the latest tag — which is
+# exactly what this script produces. So this script is only needed for a
+# deliberate minor/major bump; an ordinary patch release needs no script at
+# all, just `git push`. It never pushes or tags itself — CI owns the tag, so
+# that the two can't disagree about what the next version is.
 #
 # Usage: scripts/bump-version.sh <new-version>
 #   e.g. scripts/bump-version.sh 0.2.0
@@ -38,6 +43,13 @@ if git rev-parse "$TAG" >/dev/null 2>&1; then
   exit 1
 fi
 
+LATEST_TAG="$(git tag --list 'v*' --sort=-v:refname | head -n1 | sed 's/^v//')"
+LATEST_TAG="${LATEST_TAG:-0.0.0}"
+if [[ "$VERSION" == "$LATEST_TAG" ]]; then
+  echo "Error: $VERSION matches the latest existing tag; pick a version ahead of it." >&2
+  exit 1
+fi
+
 echo "Bumping to $VERSION..."
 
 # package.json and tauri.conf.json are both plain JSON with a top-level
@@ -67,10 +79,8 @@ perl -0pi -e 's/(\[package\](?:(?!\n\[).)*?\nversion = ")[^"]+(")/${1}'"$VERSION
 
 git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
 git commit -m "chore: bump version to $VERSION"
-git tag -a "$TAG" -m "Halabi Online Admin $TAG"
 
 echo ""
-echo "Done. Review the commit, then push both to trigger the signed release build:"
+echo "Done. Review the commit, then push to release it as $TAG:"
 echo ""
 echo "  git push origin main"
-echo "  git push origin $TAG"
