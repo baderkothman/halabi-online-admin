@@ -3,10 +3,11 @@ name: Build desktop app
 on:
   push:
     branches: [main]
+    tags: ['v*']
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: desktop-build-${{ github.ref }}
@@ -21,12 +22,15 @@ jobs:
           - os: macos-latest
             bundle: dmg
             artifact: halabi-admin-macos
+            release-glob: src-tauri/target/release/bundle/dmg/*.dmg
           - os: windows-latest
             bundle: msi
             artifact: halabi-admin-windows
+            release-glob: src-tauri/target/release/bundle/msi/*.msi
           - os: ubuntu-22.04
             bundle: deb
             artifact: halabi-admin-linux
+            release-glob: src-tauri/target/release/bundle/deb/*.deb
     runs-on: ${{ matrix.os }}
     timeout-minutes: 45
     steps:
@@ -65,3 +69,18 @@ jobs:
             src-tauri/target/release/bundle/deb/*.deb
           if-no-files-found: error
           retention-days: 14
+
+      # Only a version tag (v0.1.0, v0.2.1, …) publishes a release; a plain
+      # push to main still builds and uploads Action artifacts above, but
+      # does not create or touch a release. Each OS in this matrix runs this
+      # step for the same tag and release — softprops/action-gh-release
+      # creates the release on the first upload and appends assets on the
+      # rest, so three parallel jobs converge on one release with all three
+      # installers rather than three separate releases.
+      - name: Attach installer to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Halabi Online Admin ${{ github.ref_name }}
+          generate_release_notes: true
+          files: ${{ matrix.release-glob }}
