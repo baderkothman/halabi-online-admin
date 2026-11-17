@@ -29,7 +29,7 @@
         "style-src": "'self' 'unsafe-inline'",
         "font-src": "'self' data:",
         "img-src": "'self' data: blob: https:",
-        "connect-src": "'self' ipc: http://ipc.localhost http://127.0.0.1:4000 http://localhost:4000 https:",
+        "connect-src": "'self' ipc: http://ipc.localhost http://127.0.0.1:4000 http://localhost:4000 https://halabi-online-api.vercel.app",
         "frame-src": "'none'",
         "object-src": "'none'",
         "base-uri": "'self'",

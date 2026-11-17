@@ -35,6 +35,10 @@ own environment and already defaults to `http://localhost:1420`, which is the
 port this app fixes in `vite.config.ts` — those two values must agree or every
 request fails CORS in a way that looks like an authentication bug.
 
+Production desktop builds use `.env.production` and connect to
+`https://halabi-online-api.vercel.app`. The API also allows the packaged Tauri
+origins used on macOS, Linux, and Windows.
+
 ## Commands
 
 | Command               | What it does                                          |
