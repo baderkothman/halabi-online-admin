@@ -104,4 +104,8 @@ jobs:
           tagName: ${{ steps.version.outputs.tag }}
           releaseName: 'Halabi Online Admin ${{ steps.version.outputs.tag }}'
           generateReleaseNotes: true
-          args: --bundles dmg
+          # `app` is the macOS updater's own artifact (signed .app.tar.gz +
+          # .sig, which is what latest.json points at); `dmg` is what a human
+          # downloads from the Release page. The updater silently can't work
+          # without `app` in this list — the .dmg alone isn't update-enabled.
+          args: --bundles app,dmg
