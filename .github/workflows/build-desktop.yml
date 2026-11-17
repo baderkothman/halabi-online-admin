@@ -15,36 +15,13 @@ concurrency:
 
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # Pinned to a concrete OS version rather than the `macos-latest`
-          # alias, which GitHub periodically repoints to a different
-          # Xcode/arm64 image without notice. macos-15 is Apple Silicon
-          # (arm64) — matches what `macos-latest` currently resolves to.
-          - os: macos-15
-            bundle: dmg
-            artifact: halabi-admin-macos
-            release-glob: src-tauri/target/release/bundle/dmg/*.dmg
-          - os: windows-latest
-            bundle: msi
-            artifact: halabi-admin-windows
-            release-glob: src-tauri/target/release/bundle/msi/*.msi
-          - os: ubuntu-22.04
-            bundle: deb
-            artifact: halabi-admin-linux
-            release-glob: src-tauri/target/release/bundle/deb/*.deb
-    runs-on: ${{ matrix.os }}
+    # Windows (.msi) and Linux (.deb) builds are disabled for now — macOS is
+    # the only platform in active use. Re-add a matrix with those entries
+    # (see git history) when they're needed again.
+    runs-on: macos-15
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
-
-      - name: Install Linux build dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils libssl-dev
 
       - uses: oven-sh/setup-bun@v2.2.0
         with:
@@ -72,36 +49,30 @@ jobs:
       - name: Build installer (CI check)
         if: "!startsWith(github.ref, 'refs/tags/v')"
         env:
-          APPLE_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && '-' || '' }}
-        run: bun run tauri build --ci --bundles ${{ matrix.bundle }}
+          APPLE_SIGNING_IDENTITY: '-'
+        run: bun run tauri build --ci --bundles dmg
 
       - uses: actions/upload-artifact@v7
         if: "!startsWith(github.ref, 'refs/tags/v')"
         with:
-          name: ${{ matrix.artifact }}
-          path: |
-            src-tauri/target/release/bundle/dmg/*.dmg
-            src-tauri/target/release/bundle/msi/*.msi
-            src-tauri/target/release/bundle/deb/*.deb
+          name: halabi-admin-macos
+          path: src-tauri/target/release/bundle/dmg/*.dmg
           if-no-files-found: error
           retention-days: 14
 
       # A version tag (v0.1.0, v0.2.1, …) builds a *signed* update artifact
       # alongside the installer, creates/updates the GitHub Release for this
-      # tag, and uploads a merged `latest.json` that the in-app updater polls.
-      # Each OS in this matrix runs this step for the same tag — tauri-action
-      # converges all three onto one release, same as the manual upload below
-      # used to, but also assembles latest.json across all three platforms.
+      # tag, and uploads a `latest.json` that the in-app updater polls.
       - name: Build and publish release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLE_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && '-' || '' }}
+          APPLE_SIGNING_IDENTITY: '-'
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Halabi Online Admin ${{ github.ref_name }}'
           generateReleaseNotes: true
-          args: --bundles ${{ matrix.bundle }}
+          args: --bundles dmg
