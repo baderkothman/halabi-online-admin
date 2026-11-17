@@ -1,8 +1,9 @@
 import { Box, Button, Checkbox, FormControlLabel, IconButton, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined';
+import BrokenImageOutlinedIcon from '@mui/icons-material/BrokenImageOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { Controller, useFieldArray, type Control, type FieldErrors, type UseFormRegister, type UseFormSetValue } from 'react-hook-form';
-import type { ReactNode } from 'react';
+import { Controller, useFieldArray, useWatch, type Control, type FieldErrors, type UseFormRegister, type UseFormSetValue } from 'react-hook-form';
+import { useState, type ReactNode } from 'react';
 import type { WatchFormValues } from './schema';
 import { suggestSlug } from './schema';
 import { WATCH_AVAILABILITY, WATCH_VISIBILITY, type Category } from '@/types/domain';
@@ -136,6 +137,105 @@ export function SpecificationFields({ register }: FieldGroupProps) {
   );
 }
 
+/**
+ * One image row, split out from `ImageFields` so `useWatch` below has a
+ * stable hook-call count per row — calling it directly inside the parent's
+ * `.map` would violate the rules of hooks as rows are added/removed.
+ *
+ * Shows a live thumbnail of whatever URL is currently typed, so a pasted URL
+ * that doesn't actually resolve to an image is obvious immediately instead of
+ * only failing silently after save.
+ */
+function ImageRow({
+  index, register, control, error, onMarkPrimary, onRemove,
+}: {
+  index: number;
+  register: UseFormRegister<WatchFormValues>;
+  control: Control<WatchFormValues>;
+  error: NonNullable<FieldErrors<WatchFormValues>['images']>[number] | undefined;
+  onMarkPrimary: () => void;
+  onRemove: () => void;
+}) {
+  const url = useWatch({ control, name: `images.${index}.url` });
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  return (
+    <Box sx={{ p: 1.25, border: 1, borderColor: 'line.subtle', borderRadius: 1, bgcolor: 'surfaceTone.sunken' }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} alignItems={{ sm: 'flex-start' }}>
+        <Box
+          sx={{
+            width: 56,
+            height: 56,
+            flexShrink: 0,
+            borderRadius: 1,
+            border: 1,
+            borderColor: 'line.subtle',
+            bgcolor: 'background.paper',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+          }}
+        >
+          {url && !loadFailed ? (
+            <Box
+              component="img"
+              src={url}
+              alt=""
+              onError={() => setLoadFailed(true)}
+              onLoad={() => setLoadFailed(false)}
+              sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <BrokenImageOutlinedIcon fontSize="small" sx={{ color: 'ink.muted' }} />
+          )}
+        </Box>
+        <TextField
+          {...register(`images.${index}.url`)}
+          label={`Image ${index + 1} URL`}
+          required
+          error={Boolean(error?.url)}
+          helperText={error?.url?.message ?? (loadFailed && url ? "Couldn't load an image from this URL." : undefined)}
+          placeholder="https://..."
+          sx={{ flex: 1.35 }}
+        />
+        <TextField
+          {...register(`images.${index}.alt`)}
+          label="Alt text"
+          error={Boolean(error?.alt)}
+          helperText={error?.alt?.message ?? 'Optional; defaults to a generic watch description.'}
+          sx={{ flex: 1 }}
+        />
+        <Controller
+          name={`images.${index}.isPrimary`}
+          control={control}
+          render={({ field: primaryField }) => (
+            <FormControlLabel
+              sx={{ minWidth: 72, mt: { sm: 0.6 } }}
+              control={
+                <Checkbox
+                  checked={Boolean(primaryField.value)}
+                  onChange={onMarkPrimary}
+                  inputRef={primaryField.ref}
+                />
+              }
+              label="Cover"
+            />
+          )}
+        />
+        <IconButton
+          type="button"
+          onClick={onRemove}
+          aria-label={`Remove image ${index + 1}`}
+          sx={{ mt: { sm: 0.35 }, alignSelf: { xs: 'flex-end', sm: 'center' } }}
+        >
+          <DeleteOutlineIcon fontSize="small" />
+        </IconButton>
+      </Stack>
+    </Box>
+  );
+}
+
 export function ImageFields({ register, control, errors, setValue }: FieldGroupProps & {
   setValue: UseFormSetValue<WatchFormValues>;
 }) {
@@ -154,59 +254,17 @@ export function ImageFields({ register, control, errors, setValue }: FieldGroupP
       </Typography>
 
       <Stack spacing={1.25}>
-        {fields.map((field, index) => {
-          const imageError = errors.images?.[index];
-          return (
-            <Box
-              key={field.id}
-              sx={{ p: 1.25, border: 1, borderColor: 'line.subtle', borderRadius: 1, bgcolor: 'surfaceTone.sunken' }}
-            >
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} alignItems={{ sm: 'flex-start' }}>
-                <TextField
-                  {...register(`images.${index}.url`)}
-                  label={`Image ${index + 1} URL`}
-                  required
-                  error={Boolean(imageError?.url)}
-                  helperText={imageError?.url?.message}
-                  placeholder="https://..."
-                  sx={{ flex: 1.35 }}
-                />
-                <TextField
-                  {...register(`images.${index}.alt`)}
-                  label="Alt text"
-                  error={Boolean(imageError?.alt)}
-                  helperText={imageError?.alt?.message ?? 'Optional; defaults to a generic watch description.'}
-                  sx={{ flex: 1 }}
-                />
-                <Controller
-                  name={`images.${index}.isPrimary`}
-                  control={control}
-                  render={({ field: primaryField }) => (
-                    <FormControlLabel
-                      sx={{ minWidth: 72, mt: { sm: 0.6 } }}
-                      control={
-                        <Checkbox
-                          checked={Boolean(primaryField.value)}
-                          onChange={() => markPrimary(index)}
-                          inputRef={primaryField.ref}
-                        />
-                      }
-                      label="Cover"
-                    />
-                  )}
-                />
-                <IconButton
-                  type="button"
-                  onClick={() => remove(index)}
-                  aria-label={`Remove image ${index + 1}`}
-                  sx={{ mt: { sm: 0.35 }, alignSelf: { xs: 'flex-end', sm: 'center' } }}
-                >
-                  <DeleteOutlineIcon fontSize="small" />
-                </IconButton>
-              </Stack>
-            </Box>
-          );
-        })}
+        {fields.map((field, index) => (
+          <ImageRow
+            key={field.id}
+            index={index}
+            register={register}
+            control={control}
+            error={errors.images?.[index]}
+            onMarkPrimary={() => markPrimary(index)}
+            onRemove={() => remove(index)}
+          />
+        ))}
       </Stack>
 
       <Button

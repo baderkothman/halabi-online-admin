@@ -19,7 +19,7 @@ import { useSnackbar } from '@/app/providers/SnackbarProvider';
 import { toDisplayMessage } from '@/services/api';
 import type { WatchWriteInput } from '@/types/domain';
 
-const COLUMN_COUNT = 8;
+const COLUMN_COUNT = 9;
 const ROWS_PER_PAGE = 25;
 
 /**
@@ -93,6 +93,7 @@ export function WatchesPage() {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
+                <TableCell padding="checkbox" />
                 <TableCell>Watch</TableCell>
                 <TableCell>Reference</TableCell>
                 <TableCell align="right">Price</TableCell>

@@ -1,8 +1,9 @@
-import { Button, IconButton, TableCell, TableRow, Tooltip, Typography } from '@mui/material';
+import { Box, Button, IconButton, TableCell, TableRow, Tooltip, Typography } from '@mui/material';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
+import WatchOutlinedIcon from '@mui/icons-material/WatchOutlined';
 import { WatchStatusMenu } from './WatchStatusMenu';
 import { visibilityPresentation } from '@/config/availability';
 import { formatDate, formatPrice } from '@/lib/format';
@@ -28,9 +29,32 @@ export function WatchRow({
 }) {
   const visibility = visibilityPresentation[watch.visibility];
   const published = watch.visibility === 'PUBLIC';
+  const cover = watch.images.find((image) => image.isPrimary) ?? watch.images[0];
 
   return (
     <TableRow hover>
+      <TableCell padding="checkbox">
+        <Box
+          sx={{
+            width: 36,
+            height: 36,
+            borderRadius: 1,
+            border: 1,
+            borderColor: 'line.subtle',
+            bgcolor: 'background.paper',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+          }}
+        >
+          {cover ? (
+            <Box component="img" src={cover.url} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <WatchOutlinedIcon fontSize="small" sx={{ color: 'ink.muted' }} />
+          )}
+        </Box>
+      </TableCell>
       <TableCell sx={{ maxWidth: 320 }}>
         <Typography variant="subtitle2" noWrap>
           {watch.name}
