@@ -5,8 +5,9 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { InquiryConversation } from './InquiryConversation';
 import { InquiryHeader } from './InquiryHeader';
+import { InquiryNotificationStatus } from './InquiryNotificationStatus';
 import { InquiryReplyBox } from './InquiryReplyBox';
-import { useInquiry, useReplyToInquiry, useUpdateInquiryStatus } from './queries';
+import { useInquiry, useReplyToInquiry, useRetryNotificationAttempt, useUpdateInquiryStatus } from './queries';
 import { getInquiryStatus, requiresConfirmation } from '@/config/inquiry-status';
 import { useSnackbar } from '@/app/providers/SnackbarProvider';
 import { toDisplayMessage } from '@/services/api';
@@ -26,6 +27,7 @@ export function InquiryDetailPane({ id }: { id: string }) {
   const inquiry = useInquiry(id);
   const updateStatus = useUpdateInquiryStatus();
   const reply = useReplyToInquiry();
+  const retryAttempt = useRetryNotificationAttempt();
 
   const [pendingStatus, setPendingStatus] = useState<InquiryStatus | null>(null);
 
@@ -60,6 +62,16 @@ export function InquiryDetailPane({ id }: { id: string }) {
     );
   };
 
+  const retryNotification = (attemptId: string) => {
+    retryAttempt.mutate(
+      { inquiryId: id, attemptId },
+      {
+        onSuccess: () => notifySuccess('Notification re-queued.'),
+        onError: (error) => notifyError(toDisplayMessage(error)),
+      },
+    );
+  };
+
   /** Statuses that end the working conversation are confirmed first. */
   const chooseStatus = (next: InquiryStatus) => {
     if (requiresConfirmation(next)) setPendingStatus(next);
@@ -71,11 +83,9 @@ export function InquiryDetailPane({ id }: { id: string }) {
       { id, body },
       {
         onSuccess: () =>
-          // The API emails the customer and writes a notification for
-          // registered accounts; saying so sets the right expectation.
-          notifySuccess(
-            data.email ? 'Reply sent. The customer has been notified by email.' : 'Reply saved to the conversation.',
-          ),
+          // The reply is saved first; delivery happens afterwards and is tracked
+          // under "Notification delivery", so do not claim it was delivered.
+          notifySuccess('Reply saved. The customer notification is being sent — check delivery status below.'),
         onError: (error) => notifyError(toDisplayMessage(error)),
       },
     );
@@ -94,6 +104,12 @@ export function InquiryDetailPane({ id }: { id: string }) {
       <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', bgcolor: 'surfaceTone.canvas' }}>
         <InquiryConversation messages={data.messages} />
       </Box>
+
+      <InquiryNotificationStatus
+        attempts={data.notificationAttempts}
+        retryingId={retryAttempt.isPending ? (retryAttempt.variables?.attemptId ?? null) : null}
+        onRetry={retryNotification}
+      />
 
       <InquiryReplyBox
         status={data.status}

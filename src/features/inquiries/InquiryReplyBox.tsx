@@ -76,8 +76,8 @@ export function InquiryReplyBox({
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 1 }}>
         <Typography variant="caption" color="ink.muted">
           {customerHasEmail
-            ? 'The customer is notified by email when you reply.'
-            : 'This customer has no email on file — reply here, then contact them directly.'}
+            ? 'The customer is notified by their preferred channel (email or WhatsApp) when you reply.'
+            : 'No email on file — only a WhatsApp-preferring customer is notified; otherwise contact them directly.'}
         </Typography>
         <Box sx={{ flex: 1 }} />
         {draft.length > MAX_REPLY_LENGTH - 200 && (

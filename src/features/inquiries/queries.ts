@@ -47,6 +47,17 @@ export function useUpdateInquiryStatus() {
   });
 }
 
+export function useRetryNotificationAttempt() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ inquiryId, attemptId }: { inquiryId: string; attemptId: string }) =>
+      inquiriesApi.retryNotificationAttempt(inquiryId, attemptId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.inquiries.all });
+    },
+  });
+}
+
 export function useReplyToInquiry() {
   const queryClient = useQueryClient();
   return useMutation({

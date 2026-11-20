@@ -147,6 +147,34 @@ export interface InquiryMessage {
   readAt: string | null;
 }
 
+export const NOTIFICATION_CHANNEL = ['EMAIL', 'WHATSAPP'] as const;
+export type NotificationChannel = (typeof NOTIFICATION_CHANNEL)[number];
+
+export const NOTIFICATION_STATUS = ['QUEUED', 'SENDING', 'ACCEPTED', 'DELIVERED', 'FAILED', 'UNKNOWN'] as const;
+export type NotificationStatus = (typeof NOTIFICATION_STATUS)[number];
+
+export const NOTIFICATION_EVENT = ['INQUIRY_CREATED', 'INQUIRY_MESSAGE_CREATED'] as const;
+export type NotificationEvent = (typeof NOTIFICATION_EVENT)[number];
+
+/**
+ * An external (email / WhatsApp) delivery attempt for an inquiry event.
+ * `ACCEPTED` means the provider took the message, not that it was delivered.
+ * The recipient is masked by the API; it is safe to display.
+ */
+export interface NotificationAttempt {
+  id: string;
+  eventType: NotificationEvent;
+  channel: NotificationChannel;
+  recipientLabel: string;
+  status: NotificationStatus;
+  attemptCount: number;
+  lastError: string | null;
+  createdAt: string;
+  updatedAt: string;
+  /** Only definitively FAILED attempts can be retried safely. */
+  retryable: boolean;
+}
+
 /** `GET /admin/inquiries/:id`. */
 export interface InquiryDetail {
   id: string;
@@ -162,6 +190,7 @@ export interface InquiryDetail {
   watchName: string;
   watchBrand: string;
   messages: InquiryMessage[];
+  notificationAttempts: NotificationAttempt[];
 }
 
 /** `GET /admin/dashboard/summary`. Snake-cased by the API's raw SQL aliases. */

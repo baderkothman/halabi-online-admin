@@ -1,8 +1,8 @@
 import { requestData } from './client';
-import { asArray, asRecord, toCount, toEnum, toStringOrNull, toText } from '@/lib/coerce';
+import { asArray, asRecord, toBoolean, toCount, toEnum, toStringOrNull, toText } from '@/lib/coerce';
 import {
-  CONTACT_METHOD, INQUIRY_STATUS, MESSAGE_SENDER,
-  type InquiryDetail, type InquiryListItem, type InquiryMessage, type InquiryStatus,
+  CONTACT_METHOD, INQUIRY_STATUS, MESSAGE_SENDER, NOTIFICATION_CHANNEL, NOTIFICATION_EVENT, NOTIFICATION_STATUS,
+  type InquiryDetail, type InquiryListItem, type InquiryMessage, type InquiryStatus, type NotificationAttempt,
 } from '@/types/domain';
 
 /**
@@ -43,6 +43,23 @@ function toMessage(raw: unknown): InquiryMessage {
   };
 }
 
+function toNotificationAttempt(raw: unknown): NotificationAttempt {
+  const row = asRecord(raw);
+  return {
+    id: toText(row.id),
+    eventType: toEnum(row.eventType, NOTIFICATION_EVENT, 'INQUIRY_CREATED'),
+    channel: toEnum(row.channel, NOTIFICATION_CHANNEL, 'EMAIL'),
+    recipientLabel: toText(row.recipientLabel),
+    // An unrecognised status is shown as UNKNOWN rather than as a success.
+    status: toEnum(row.status, NOTIFICATION_STATUS, 'UNKNOWN'),
+    attemptCount: toCount(row.attemptCount),
+    lastError: toStringOrNull(row.lastError),
+    createdAt: toText(row.createdAt),
+    updatedAt: toText(row.updatedAt),
+    retryable: toBoolean(row.retryable),
+  };
+}
+
 export async function listInquiries(status?: InquiryStatus, signal?: AbortSignal): Promise<InquiryListItem[]> {
   const data = await requestData<unknown>('/admin/inquiries', {
     ...(status ? { query: { status } } : {}),
@@ -69,6 +86,7 @@ export async function getInquiry(id: string, signal?: AbortSignal): Promise<Inqu
     watchName: toText(row.watchName),
     watchBrand: toText(row.watchBrand),
     messages: asArray(row.messages).map(toMessage),
+    notificationAttempts: asArray(row.notificationAttempts).map(toNotificationAttempt),
   };
 }
 
@@ -87,9 +105,10 @@ export async function updateInquiryStatus(id: string, status: InquiryStatus): Pr
  *
  * Two backend side effects matter to the cache, and neither is visible in the
  * response body: the API moves the inquiry to `IN_DISCUSSION`, and — for a
- * registered customer with an email on file — writes a notification row and
- * sends an email. Callers must therefore invalidate the inquiry detail AND the
- * list, not merely append the returned message.
+ * registered customer with an email on file — writes an in-app notification row.
+ * It also queues an email or WhatsApp notification whose delivery is tracked per
+ * attempt on the detail response. Callers must therefore invalidate the inquiry
+ * detail AND the list, not merely append the returned message.
  */
 export async function replyToInquiry(id: string, body: string): Promise<InquiryMessage> {
   return toMessage(
@@ -97,5 +116,17 @@ export async function replyToInquiry(id: string, body: string): Promise<InquiryM
       method: 'POST',
       body: { body },
     }),
+  );
+}
+
+/**
+ * Requeues a definitively failed notification attempt. The API rejects (409)
+ * attempts that are accepted, delivered or of unknown outcome, so a resend can
+ * never duplicate a message that may already have gone out.
+ */
+export async function retryNotificationAttempt(inquiryId: string, attemptId: string): Promise<void> {
+  await requestData<unknown>(
+    `/admin/inquiries/${encodeURIComponent(inquiryId)}/notification-attempts/${encodeURIComponent(attemptId)}/retry`,
+    { method: 'POST' },
   );
 }
