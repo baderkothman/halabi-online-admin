@@ -14,6 +14,9 @@ export const routes = {
 
   inquiries: '/inquiries',
   inquiry: (id: string) => `/inquiries/${id}`,
+
+  settings: '/settings',
+  settingsSection: (section: string) => `/settings/${section}`,
 } as const;
 
 /** The screen an authenticated administrator lands on. */

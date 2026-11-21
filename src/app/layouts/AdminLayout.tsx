@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Box } from '@mui/material';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -8,6 +8,8 @@ import { titleForPath } from './navigation';
 import { AppErrorBoundary } from '@/app/error-boundary/AppErrorBoundary';
 import { dashboardApi } from '@/services/api';
 import { queryKeys } from '@/services/query-keys';
+import { updateSettings, useSettings } from '@/app/settings/settings';
+import { useNewInquiryAlerts } from '@/app/notifications/use-new-inquiry-alerts';
 
 /**
  * The application shell.
@@ -17,7 +19,8 @@ import { queryKeys } from '@/services/query-keys';
  * application should behave, rather than scrolling away like a web page.
  */
 export function AdminLayout() {
-  const [collapsed, setCollapsed] = useState(false);
+  // Remembered across launches.
+  const { sidebarCollapsed: collapsed } = useSettings();
   const { pathname } = useLocation();
 
   // The sidebar's unread badge. It reuses the dashboard summary rather than
@@ -26,17 +29,19 @@ export function AdminLayout() {
   const { data: summary } = useQuery({
     queryKey: queryKeys.dashboard.summary(),
     queryFn: ({ signal }) => dashboardApi.getSummary(signal),
-    // Refreshed on a slow timer so a new inquiry surfaces without the operator
-    // reloading, but not often enough to be a polling load on the API.
-    refetchInterval: 120_000,
+    // Refreshed every 30s so a new inquiry is announced promptly. It is one
+    // small aggregate query, so the polling load on the API stays negligible.
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: true,
   });
+  useNewInquiryAlerts(summary?.new_inquiries);
 
   return (
     <Box sx={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
       <Sidebar collapsed={collapsed} badges={{ newInquiries: summary?.new_inquiries ?? 0 }} />
 
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, overflow: 'hidden' }}>
-        <TopBar title={titleForPath(pathname)} collapsed={collapsed} onToggleSidebar={() => setCollapsed((value) => !value)} />
+        <TopBar title={titleForPath(pathname)} collapsed={collapsed} onToggleSidebar={() => updateSettings((settings) => ({ ...settings, sidebarCollapsed: !settings.sidebarCollapsed }))} />
 
         <Box component="main" sx={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           {/* Keyed on the path so navigating away from a crashed screen recovers. */}

@@ -1,11 +1,7 @@
-import { Box, Button, IconButton, TableCell, TableRow, Tooltip, Typography } from '@mui/material';
-import StarIcon from '@mui/icons-material/Star';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
+import { Box, Button, TableCell, TableRow, Typography } from '@mui/material';
 import WatchOutlinedIcon from '@mui/icons-material/WatchOutlined';
 import { WatchStatusMenu } from './WatchStatusMenu';
-import { visibilityPresentation } from '@/config/availability';
+import { FeaturedToggle, VisibilityToggle, coverImage } from './WatchToggles';
 import { formatDate, formatPrice } from '@/lib/format';
 import type { AdminWatchListItem, WatchAvailability, WatchWriteInput } from '@/types/domain';
 
@@ -27,9 +23,7 @@ export function WatchRow({
   onPatch: (input: Partial<WatchWriteInput>, message: string) => void;
   onEdit: () => void;
 }) {
-  const visibility = visibilityPresentation[watch.visibility];
-  const published = watch.visibility === 'PUBLIC';
-  const cover = watch.images.find((image) => image.isPrimary) ?? watch.images[0];
+  const cover = coverImage(watch);
 
   return (
     <TableRow hover>
@@ -80,46 +74,11 @@ export function WatchRow({
       </TableCell>
 
       <TableCell>
-        <Tooltip title={visibility.description}>
-          <IconButton
-            onClick={() =>
-              onPatch(
-                { visibility: published ? 'PRIVATE' : 'PUBLIC' },
-                published ? 'is no longer on the storefront.' : 'is now on the storefront.',
-              )
-            }
-            disabled={busy}
-            aria-label={published ? `Unpublish ${watch.name}` : `Publish ${watch.name}`}
-            size="small"
-          >
-            {published ? (
-              <VisibilityOutlinedIcon sx={{ fontSize: 17, color: 'statusTone.positive' }} />
-            ) : (
-              <VisibilityOffOutlinedIcon sx={{ fontSize: 17 }} />
-            )}
-          </IconButton>
-        </Tooltip>
+        <VisibilityToggle watch={watch} busy={busy} onPatch={onPatch} />
       </TableCell>
 
       <TableCell align="center">
-        <IconButton
-          onClick={() =>
-            onPatch(
-              { featured: !watch.featured },
-              watch.featured ? 'is no longer featured.' : 'is now featured.',
-            )
-          }
-          disabled={busy}
-          aria-label={watch.featured ? `Unfeature ${watch.name}` : `Feature ${watch.name}`}
-          aria-pressed={watch.featured}
-          size="small"
-        >
-          {watch.featured ? (
-            <StarIcon sx={{ fontSize: 17, color: 'statusTone.notice' }} />
-          ) : (
-            <StarBorderIcon sx={{ fontSize: 17 }} />
-          )}
-        </IconButton>
+        <FeaturedToggle watch={watch} busy={busy} onPatch={onPatch} />
       </TableCell>
 
       <TableCell sx={{ color: 'ink.muted', whiteSpace: 'nowrap' }}>{formatDate(watch.createdAt)}</TableCell>

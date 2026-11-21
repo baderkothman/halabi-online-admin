@@ -76,3 +76,14 @@ animation beyond a 140ms sidebar transition. The dashboard's four figures are
 set at 26px — the only display-size type in the product — and everything else
 stays quiet. The fastest way to make an internal tool look generated is to
 decorate it.
+
+Charts are allowed only when they show real records. The dashboard's 30-day
+inquiry chart (`components/data-display/BarChart.tsx`) is built from boxes
+rather than a charting library: muted ink bars, today in the accent, exact
+values in a tooltip and in a visually hidden table. Pipeline bars are 4px
+tracks with the count printed beside them, so nothing depends on reading a bar
+length.
+
+Watch cards in the grid view follow the same rules as the rest of the app: an
+outlined surface with no shadow, the photo first at 4:3 on a sunken ground, and
+status shown by the shared `StatusChip`.

@@ -10,6 +10,7 @@ pub fn run() {
         // `process` is only used to relaunch the app once the update lands.
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_notification::init())
         .invoke_handler(tauri::generate_handler![
             keychain::store_session,
             keychain::load_session,

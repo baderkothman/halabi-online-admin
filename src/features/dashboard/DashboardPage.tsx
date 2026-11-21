@@ -1,4 +1,5 @@
 import { Box, Button, Fade, Paper, Skeleton, Stack, Typography } from '@mui/material';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link as RouterLink } from 'react-router-dom';
 import { PageBody } from '@/app/layouts/AdminLayout';
@@ -12,13 +13,18 @@ import { getInquiryStatus } from '@/config/inquiry-status';
 import { formatRelative } from '@/lib/format';
 import { routes } from '@/config/routes';
 import { duration } from '@/theme';
+import { useWatches } from '@/features/watches/queries';
+import { computeInsights } from './insights';
+import { AttentionPanel, InquiryTrendPanel, PipelinePanel, TopWatchesPanel } from './InsightsPanels';
 
 /**
  * The operational dashboard.
  *
- * Four figures and one work queue. There are no charts: the API exposes no time
- * series, and a chart drawn from four scalars would be decoration. The queue is
- * the point — it is what an administrator opens the application to deal with.
+ * Four figures, the work queue, then insights computed from the inquiry and
+ * watch lists the app already loads: a 30-day inquiry trend, the pipeline,
+ * the most inquired pieces and catalogue gaps that block sales. Every chart is
+ * drawn from real records; nothing is estimated. The queue stays first because
+ * it is what an administrator opens the application to deal with.
  */
 export function DashboardPage() {
   const summary = useQuery({
@@ -33,6 +39,17 @@ export function DashboardPage() {
     queryFn: ({ signal }) => inquiriesApi.listInquiries(undefined, signal),
     select: (list) => list.slice(0, 6),
   });
+
+  // Same cache entries as the inbox and catalogue, so these cost no extra requests there.
+  const allInquiries = useQuery({
+    queryKey: queryKeys.inquiries.list(),
+    queryFn: ({ signal }) => inquiriesApi.listInquiries(undefined, signal),
+  });
+  const watches = useWatches();
+  const insights = useMemo(
+    () => (allInquiries.data && watches.data ? computeInsights(allInquiries.data, watches.data) : null),
+    [allInquiries.data, watches.data],
+  );
 
   return (
     <PageBody>
@@ -154,6 +171,28 @@ export function DashboardPage() {
           </Fade>
         )}
       </Panel>
+
+      {insights && (
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 2,
+            mt: 2,
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', lg: '2fr 1fr' },
+          }}
+        >
+          <InquiryTrendPanel insights={insights} />
+          <PipelinePanel insights={insights} />
+          <TopWatchesPanel insights={insights} />
+          <AttentionPanel insights={insights} />
+        </Box>
+      )}
+      {(allInquiries.isPending || watches.isPending) && !insights && (
+        <Box sx={{ display: 'grid', gap: 2, mt: 2, gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' } }}>
+          <Skeleton variant="rounded" height={180} />
+          <Skeleton variant="rounded" height={180} />
+        </Box>
+      )}
     </PageBody>
   );
 }

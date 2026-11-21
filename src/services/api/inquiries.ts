@@ -130,3 +130,11 @@ export async function retryNotificationAttempt(inquiryId: string, attemptId: str
     { method: 'POST' },
   );
 }
+
+/**
+ * Records that the administrator opened the thread: customer messages become
+ * read and a NEW inquiry becomes VIEWED. Idempotent on the server.
+ */
+export async function markInquiryRead(id: string): Promise<void> {
+  await requestData<unknown>(`/admin/inquiries/${encodeURIComponent(id)}/read`, { method: 'POST' });
+}

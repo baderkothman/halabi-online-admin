@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { inquiriesApi } from '@/services/api';
 import { queryKeys } from '@/services/query-keys';
 import { notificationRefetchInterval } from './notification-polling';
+import { decrementNewInquiries, markDetailRead, markListItemRead } from './read-state';
+import type { DashboardSummary, InquiryDetail, InquiryListItem } from '@/types/domain';
 import type { InquiryStatus } from '@/types/domain';
 
 /**
@@ -66,6 +68,27 @@ export function useReplyToInquiry() {
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: string }) => inquiriesApi.replyToInquiry(id, body),
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.inquiries.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+    },
+  });
+}
+
+/**
+ * Marks an opened inquiry read. The caches are updated before the request goes
+ * out, so every unread indicator clears the moment the inquiry opens; on
+ * failure the affected queries are refetched to restore the server's view.
+ */
+export function useMarkInquiryRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }: { id: string; wasNew: boolean }) => inquiriesApi.markInquiryRead(id),
+    onMutate: ({ id, wasNew }) => {
+      queryClient.setQueriesData<InquiryListItem[]>({ queryKey: ['inquiries', 'list'] }, (rows) => markListItemRead(rows, id));
+      queryClient.setQueryData<InquiryDetail>(queryKeys.inquiries.detail(id), (detail) => markDetailRead(detail, new Date().toISOString()));
+      queryClient.setQueryData<DashboardSummary>(queryKeys.dashboard.summary(), (summary) => decrementNewInquiries(summary, wasNew));
+    },
+    onError: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.inquiries.all });
       void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
     },

@@ -1,6 +1,9 @@
 import { useState } from 'react';
-import { Box, Button, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, Divider, ListItemText, Menu, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
+import ShortTextIcon from '@mui/icons-material/ShortText';
+import { useNavigate } from 'react-router-dom';
+import { routes } from '@/config/routes';
 import { getInquiryStatus } from '@/config/inquiry-status';
 import type { InquiryStatus } from '@/types/domain';
 
@@ -14,16 +17,26 @@ const MAX_REPLY_LENGTH = 4000;
  * customer's thread into another's.
  */
 export function InquiryReplyBox({
-  status, customerHasEmail, sending, onSend, onReopen,
+  status, customerHasEmail, sending, onSend, onReopen, quickReplies = [],
 }: {
   status: InquiryStatus;
+  /** Already filled in for this inquiry. Managed in Settings → Templates. */
+  quickReplies?: Array<{ id: string; title: string; text: string }>;
   customerHasEmail: boolean;
   sending: boolean;
   onSend: (body: string) => void;
   onReopen: (next: InquiryStatus) => void;
 }) {
   const [draft, setDraft] = useState('');
+  const [templatesAnchor, setTemplatesAnchor] = useState<HTMLElement | null>(null);
+  const navigate = useNavigate();
   const presentation = getInquiryStatus(status);
+
+  /** Inserting never discards what is already written: it appends after a blank line. */
+  const insert = (text: string) => {
+    setDraft((current) => (current.trim() ? `${current.trimEnd()}\n\n${text}` : text).slice(0, MAX_REPLY_LENGTH));
+    setTemplatesAnchor(null);
+  };
 
   const send = () => {
     const body = draft.trim();
@@ -80,6 +93,30 @@ export function InquiryReplyBox({
             : 'No email on file — only a WhatsApp-preferring customer is notified; otherwise contact them directly.'}
         </Typography>
         <Box sx={{ flex: 1 }} />
+        <Button
+          size="small"
+          startIcon={<ShortTextIcon sx={{ fontSize: 16 }} />}
+          onClick={(event) => setTemplatesAnchor(event.currentTarget)}
+          aria-haspopup="menu"
+          disabled={sending}
+        >
+          Quick replies
+        </Button>
+        <Menu anchorEl={templatesAnchor} open={templatesAnchor !== null} onClose={() => setTemplatesAnchor(null)}>
+          {quickReplies.map((reply) => (
+            <MenuItem key={reply.id} onClick={() => insert(reply.text)} sx={{ maxWidth: 420 }}>
+              <ListItemText
+                primary={reply.title}
+                secondary={reply.text}
+                secondaryTypographyProps={{ noWrap: true }}
+              />
+            </MenuItem>
+          ))}
+          {quickReplies.length > 0 && <Divider />}
+          <MenuItem onClick={() => void navigate(routes.settingsSection('templates'))}>
+            {quickReplies.length > 0 ? 'Manage quick replies…' : 'Add quick replies in Settings…'}
+          </MenuItem>
+        </Menu>
         {draft.length > MAX_REPLY_LENGTH - 200 && (
           <Typography variant="caption" color={draft.length >= MAX_REPLY_LENGTH ? 'error.main' : 'ink.muted'}>
             {draft.length} / {MAX_REPLY_LENGTH}

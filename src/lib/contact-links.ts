@@ -1,5 +1,6 @@
 import { openUrl } from '@tauri-apps/plugin-opener';
 import type { InquiryDetail } from '@/types/domain';
+import { DEFAULT_TEMPLATES, renderTemplate } from './templates';
 
 /**
  * External contact actions: WhatsApp, email, phone.
@@ -28,9 +29,11 @@ export function toWhatsAppNumber(phone: string): string | null {
 }
 
 /** The opening message. Names the customer and the piece, and nothing more. */
-export function greetingFor(inquiry: Pick<InquiryDetail, 'customerName' | 'watchName' | 'watchBrand'>): string {
-  const piece = [inquiry.watchBrand, inquiry.watchName].filter(Boolean).join(' ');
-  return `Hello ${inquiry.customerName},\n\nI'm contacting you from Halabi Online regarding your inquiry about the ${piece}.`;
+export function greetingFor(
+  inquiry: Pick<InquiryDetail, 'customerName' | 'watchName' | 'watchBrand'>,
+  template: string = DEFAULT_TEMPLATES.whatsappOpening,
+): string {
+  return renderTemplate(template, inquiry);
 }
 
 export async function openWhatsApp(phone: string, message: string): Promise<void> {

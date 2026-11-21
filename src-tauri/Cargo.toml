@@ -17,6 +17,8 @@ tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+# New-inquiry alerts while the window is in the background.
+tauri-plugin-notification = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # The JWT is held in the operating system's credential store (macOS Keychain,

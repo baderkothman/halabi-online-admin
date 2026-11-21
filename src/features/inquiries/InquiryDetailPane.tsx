@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, Skeleton, Stack } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -7,7 +7,10 @@ import { InquiryConversation } from './InquiryConversation';
 import { InquiryHeader } from './InquiryHeader';
 import { InquiryNotificationStatus } from './InquiryNotificationStatus';
 import { InquiryReplyBox } from './InquiryReplyBox';
-import { useInquiry, useReplyToInquiry, useRetryNotificationAttempt, useUpdateInquiryStatus } from './queries';
+import { useInquiry, useMarkInquiryRead, useReplyToInquiry, useRetryNotificationAttempt, useUpdateInquiryStatus } from './queries';
+import { needsMarkRead } from './read-state';
+import { useSettings } from '@/app/settings/settings';
+import { renderTemplate } from '@/lib/templates';
 import { getInquiryStatus, requiresConfirmation } from '@/config/inquiry-status';
 import { useSnackbar } from '@/app/providers/SnackbarProvider';
 import { toDisplayMessage } from '@/services/api';
@@ -28,6 +31,22 @@ export function InquiryDetailPane({ id }: { id: string }) {
   const updateStatus = useUpdateInquiryStatus();
   const reply = useReplyToInquiry();
   const retryAttempt = useRetryNotificationAttempt();
+  const markRead = useMarkInquiryRead();
+  const { templates } = useSettings();
+
+  // Opening an inquiry reads it. Tracked per id so a background refetch, or a
+  // new customer message arriving while it is open, does not re-send blindly:
+  // it re-marks only when there is something unread again.
+  const markedFor = useRef<string | null>(null);
+  const { mutate: markReadMutate } = markRead;
+  useEffect(() => {
+    const data = inquiry.data;
+    if (!data || data.id !== id || !needsMarkRead(data)) return;
+    const key = `${id}:${data.messages.length}:${data.status}`;
+    if (markedFor.current === key) return;
+    markedFor.current = key;
+    markReadMutate({ id, wasNew: data.status === 'NEW' });
+  }, [id, inquiry.data, markReadMutate]);
 
   const [pendingStatus, setPendingStatus] = useState<InquiryStatus | null>(null);
 
@@ -114,6 +133,7 @@ export function InquiryDetailPane({ id }: { id: string }) {
       <InquiryReplyBox
         status={data.status}
         customerHasEmail={Boolean(data.email)}
+        quickReplies={templates.quickReplies.map((reply) => ({ id: reply.id, title: reply.title, text: renderTemplate(reply.body, data) }))}
         sending={reply.isPending}
         onSend={sendReply}
         onReopen={applyStatus}

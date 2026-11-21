@@ -65,6 +65,7 @@ DTO does not declare is a 400, not a silent ignore.
 | `GET /api/v1/admin/inquiries` | Optional `?status=`. No pagination, no search, no date range. |
 | `GET /api/v1/admin/inquiries/:id` | Detail with the full message thread and `notificationAttempts` (delivery status of external notifications). |
 | `PATCH /api/v1/admin/inquiries/:id/status` | Accepts any `InquiryStatus`. |
+| `POST /api/v1/admin/inquiries/:id/read` | Marks the customer's messages read and a `NEW` inquiry `VIEWED`. Idempotent. Called when an inquiry is opened. |
 | `POST /api/v1/admin/inquiries/:id/messages` | Has side effects the response does not describe — see below. |
 | `POST /api/v1/admin/inquiries/:id/notification-attempts/:attemptId/retry` | Requeues a definitively `FAILED` attempt (202). 404 if unknown, 409 if the attempt is not retryable (accepted, delivered, unknown, queued). |
 
@@ -174,9 +175,8 @@ the inquiry projections.
 and has no endpoint. There is no settings resource of any kind. Both are
 straightforward CRUD once the API exposes them.
 
-### 8. Read receipts
+### 8. Read receipts (implemented)
 
-`inquiry_messages.read_at` is selected and drives the unread badge, but nothing
-sets it — so a message is unread forever. Needed:
-`POST /admin/inquiries/:id/read`, marking customer messages read when an
-administrator opens the thread.
+`POST /admin/inquiries/:id/read` now sets `read_at` on the customer's unread
+messages and moves a `NEW` inquiry to `VIEWED`, in one transaction. The admin
+app calls it when an inquiry is opened.

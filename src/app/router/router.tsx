@@ -6,6 +6,7 @@ import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { WatchesPage } from '@/features/watches/WatchesPage';
 import { WatchFormPage } from '@/features/watches/WatchFormPage';
 import { InquiriesPage } from '@/features/inquiries/InquiriesPage';
+import { SettingsPage } from '@/features/settings/SettingsPage';
 import { NotFoundPage } from './NotFoundPage';
 import { RouteErrorBoundary } from './RouteErrorBoundary';
 import { HOME_ROUTE, routes } from '@/config/routes';
@@ -36,6 +37,8 @@ export const router = createBrowserRouter([
           { path: '/watches/:id', element: <WatchFormPage /> },
           { path: routes.inquiries, element: <InquiriesPage /> },
           { path: '/inquiries/:id', element: <InquiriesPage /> },
+          { path: routes.settings, element: <SettingsPage /> },
+          { path: '/settings/:section', element: <SettingsPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

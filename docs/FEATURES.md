@@ -27,13 +27,32 @@ Four operational figures and the live inquiry queue.
 - **Sold** — lifetime
 
 The queue lists the six most recently updated inquiries with an unread dot, and
-opens straight into the inbox. There are no charts: the API exposes no time
-series, and four scalars do not make one.
+opens straight into the inbox.
+
+Below the queue, insights computed from the inquiry and watch lists the app
+already loads (no extra endpoints, nothing estimated):
+
+- **Inquiries, last 30 days**: one bar per day with the total and the change
+  against the previous 30 days. Values are also exposed as a hidden table for
+  screen readers.
+- **Pipeline**: open inquiries per stage, and the share of resolved inquiries
+  (converted or closed) that became a sale.
+- **Most inquired watches**: the five pieces with the most inquiries.
+- **Needs attention**: pieces still for sale that are available but not
+  published, have no photos, or have no price, each linking to its form.
 
 ## Watches
 
-A dense table of the catalogue: the piece, reference, price, availability,
-storefront visibility, featured, and date added.
+Two layouts of the same catalogue, switched from the page header and remembered
+on this computer:
+
+- **Grid** (default): photo-led cards, 4:3 cover image, brand, model,
+  reference and price, with availability, publish and feature controls on the
+  card. The photo or title opens the form. 24 per page.
+- **Table**: the dense view of the piece, reference, price, availability,
+  storefront visibility, featured and date added. 25 per page.
+
+Both share the filters, sorting, pagination and the same inline controls.
 
 **Search** covers name, brand and reference — reference numbers are how dealers
 actually look a piece up. **Filters** cover availability, storefront visibility,
@@ -88,14 +107,21 @@ phone, and a status filter.
 
 **Right:** who asked, about what, the full conversation, and the actions.
 
+**Read on open.** Opening an inquiry marks the customer's messages read and
+moves a New inquiry to Viewed (`POST /admin/inquiries/:id/read`). The list dot,
+the Unread count, the dashboard's New figure and the sidebar badge update
+immediately from the cache, before the request returns; a failure refetches
+to restore the server's view.
+
 ### Contact actions
 
 The workflow this replaces is an administrator highlighting a phone number and
 pasting it into WhatsApp, dozens of times a day. Instead:
 
-- **WhatsApp** opens a composer prefilled with the customer's name and the
-  piece. Disabled with an explanation when the number cannot form a valid link.
-- **Email** opens the mail client with a subject and the same opening message.
+- **WhatsApp** opens a composer prefilled from the WhatsApp opening template
+  (customer and piece filled in). Disabled with an explanation when the number
+  cannot form a valid link.
+- **Email** opens the mail client with the email subject and message templates.
 - **Call** opens the dialler.
 
 Nothing is ever sent automatically. Each opens a composer; the administrator
@@ -124,6 +150,37 @@ itself every few seconds and stops once it settles.
 
 `Cmd/Ctrl + Enter` sends. Plain Enter does not, deliberately.
 
+**Quick replies** in the reply box insert a saved answer, with the customer and
+watch filled in, after anything already written. They are managed in
+Settings → Templates.
+
+## New inquiry alerts
+
+The dashboard summary refreshes every 30 seconds. When the number of new
+inquiries rises (not on launch, and not when one is read), a notice appears
+with an **Open inbox** action, and the sidebar badge updates. If the window is
+in the background and desktop notifications are on, an operating-system
+notification is shown too (Tauri notification plugin; permission is asked the
+first time one is needed).
+
+## Settings
+
+Device-local preferences, grouped into sections addressable by URL
+(`/settings/templates`):
+
+- **General**: collapse the sidebar (also toggled from the top bar; remembered).
+- **Notifications**: desktop notifications on or off, and a test button.
+- **Templates**: the WhatsApp opening, email subject and email message, and up
+  to 30 quick replies. Placeholders: `{customerName}`, `{watch}`,
+  `{watchBrand}`, `{watchName}`. Unknown placeholders are flagged and left
+  visible rather than silently removed. Edits are saved explicitly, with
+  discard and restore-defaults.
+- **About**: version and how updates arrive.
+
+The API has no settings resource, so these are stored in this installation's
+WebView storage and validated on read; anything missing or malformed falls back
+to its default.
+
 ### Lifecycle
 
 `NEW → VIEWED → CONTACTED → WAITING_FOR_CUSTOMER → IN_DISCUSSION → CLOSED |
@@ -137,7 +194,7 @@ pretend to a transaction it cannot make.
 
 ## Not built
 
-Categories, customers, sales, finance, testimonials and settings. Most have
+Categories, customers, sales, finance and testimonials. Most have
 database tables; none has a REST endpoint. Each is specified as a backend
 requirement in [API-INTEGRATION.md](API-INTEGRATION.md#backend-requirements).
 

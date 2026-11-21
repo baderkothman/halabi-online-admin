@@ -7,6 +7,8 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { StatusChip } from '@/components/data-display/StatusChip';
 import { contactMethodLabels, getInquiryStatus } from '@/config/inquiry-status';
 import { greetingFor, openEmail, openPhone, openWhatsApp, toWhatsAppNumber } from '@/lib/contact-links';
+import { renderTemplate } from '@/lib/templates';
+import { useSettings } from '@/app/settings/settings';
 import { formatDateTime } from '@/lib/format';
 import type { InquiryDetail, InquiryStatus } from '@/types/domain';
 
@@ -29,7 +31,8 @@ export function InquiryHeader({
 }) {
   const [statusAnchor, setStatusAnchor] = useState<HTMLElement | null>(null);
   const status = getInquiryStatus(inquiry.status);
-  const greeting = greetingFor(inquiry);
+  const { templates } = useSettings();
+  const greeting = greetingFor(inquiry, templates.whatsappOpening);
   const whatsappReady = inquiry.phone ? toWhatsAppNumber(inquiry.phone) !== null : false;
 
   /** External actions are fire-and-report: a refused URL must not be silent. */
@@ -112,8 +115,8 @@ export function InquiryHeader({
               openExternal(() =>
                 openEmail(
                   inquiry.email as string,
-                  `Your inquiry about the ${inquiry.watchBrand} ${inquiry.watchName}`,
-                  greeting,
+                  renderTemplate(templates.emailSubject, inquiry),
+                  renderTemplate(templates.emailBody, inquiry),
                 ),
               )
             }
