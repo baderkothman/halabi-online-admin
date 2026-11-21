@@ -105,8 +105,22 @@ sends it.
 
 Written in the pane and posted to the API, which stores the message, moves the
 inquiry to In discussion, writes a notification for registered customers, and
-sends the email. The UI says which of those will happen — and says the opposite
-when the customer has no email on file.
+queues an email or WhatsApp notification for the customer's preferred channel.
+Sending is asynchronous, so the reply is saved first and delivery is shown
+afterwards under **Notification delivery** (below). The UI never claims the
+customer was notified, only that the notification is being sent.
+
+### Notification delivery
+
+Each inquiry lists its external notifications (staff alert on a new inquiry,
+customer reply) with the channel, a masked recipient and a status: Queued,
+Sending, Sent to provider, Delivered, Failed or Outcome unknown. "Sent to
+provider" means the provider accepted it, not that it arrived; email becomes
+Delivered when the provider confirms. Failures show the reason and a **Retry**
+button. Retry is offered only for definite failures; an "Outcome unknown"
+WhatsApp send may already have gone out, so it is never resent from the UI and
+needs manual follow-up. While anything is still sending, the detail refreshes
+itself every few seconds and stops once it settles.
 
 `Cmd/Ctrl + Enter` sends. Plain Enter does not, deliberately.
 

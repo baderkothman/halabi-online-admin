@@ -63,13 +63,16 @@ DTO does not declare is a 400, not a silent ignore.
 | Endpoint | Notes |
 | --- | --- |
 | `GET /api/v1/admin/inquiries` | Optional `?status=`. No pagination, no search, no date range. |
-| `GET /api/v1/admin/inquiries/:id` | Detail with the full message thread. |
+| `GET /api/v1/admin/inquiries/:id` | Detail with the full message thread and `notificationAttempts` (delivery status of external notifications). |
 | `PATCH /api/v1/admin/inquiries/:id/status` | Accepts any `InquiryStatus`. |
 | `POST /api/v1/admin/inquiries/:id/messages` | Has side effects the response does not describe — see below. |
+| `POST /api/v1/admin/inquiries/:id/notification-attempts/:attemptId/retry` | Requeues a definitively `FAILED` attempt (202). 404 if unknown, 409 if the attempt is not retryable (accepted, delivered, unknown, queued). |
 
 **`POST .../messages` does three things the response body hides:** it moves the
 inquiry to `IN_DISCUSSION`, writes a `notifications` row for a registered
-customer, and sends an email through the API's `EmailService`. Appending the
+customer, and queues an email or WhatsApp notification that a background
+dispatcher sends after the response (its progress appears in
+`notificationAttempts`, not in this response). Appending the
 returned message to the cache would therefore leave the status, the list
 ordering and the sidebar badge stale. Both inquiry mutations invalidate
 `inquiries.all` **and** `dashboard.all`.

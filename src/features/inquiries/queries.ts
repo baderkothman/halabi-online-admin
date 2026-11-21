@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { inquiriesApi } from '@/services/api';
 import { queryKeys } from '@/services/query-keys';
+import { notificationRefetchInterval } from './notification-polling';
 import type { InquiryStatus } from '@/types/domain';
 
 /**
@@ -32,6 +33,8 @@ export function useInquiry(id: string | undefined) {
     queryKey: queryKeys.inquiries.detail(id ?? ''),
     queryFn: ({ signal }) => inquiriesApi.getInquiry(id as string, signal),
     enabled: Boolean(id),
+    // Keep the notification panel live until sends and delivery events settle.
+    refetchInterval: (query) => notificationRefetchInterval(query.state.data),
   });
 }
 
